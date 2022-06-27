@@ -5,19 +5,24 @@ author: Gerrit Nowald
 """
 
 import random
+# import numpy as np
+import matplotlib.pyplot as plt
 
 #------------------------------------------------------------------------------
 # parameters
 
 parameters = dict(
-    InitialPopulation = 8 ,
-    InitialAge        = 20
+    Years         = 60 ,
+    InitialAdults = 8  ,
+    InitialAge    = 20 ,
+    AgingPerYear  = 1  ,
+    DyingAge      = 80
     )
 
 #------------------------------------------------------------------------------
 # classes
 
-class citizen():
+class human():
     def __init__(self, age=0, female=None):
         self.age    = age
         self.female = female
@@ -31,34 +36,48 @@ class citizen():
 #------------------------------------------------------------------------------
 # functions
 
-def createPopulation(parameters):
-    population = set()
-    for n in range(parameters['InitialPopulation']):
-        # define sex alternating
-        if n % 2 == 0:
-            female = True
-        else:
-            female = False
-        # add new citizen 
-        population.add( citizen(age = parameters['InitialAge'], female = female) )
-    return population
-
 def getStatistics(population):
     statistics = dict(
         size       = len(population) ,
         femaleList = [ citizen.female for citizen in population ] ,
         ageList    = [ citizen.age    for citizen in population ] ,
     )
-    statistics['femaleRatio'] = sum(statistics['femaleList'])/statistics['size']
-    statistics['ageAverage']  = sum(statistics['ageList'])/len(statistics['ageList'])
+    if statistics['size'] > 0:
+        statistics['femaleRatio'] = sum(statistics['femaleList'])/statistics['size']
+        statistics['ageAverage']  = sum(statistics['ageList'])/len(statistics['ageList'])
+    else:
+        statistics['femaleRatio'] = 0
+        statistics['ageAverage']  = None
     return statistics
 
 #------------------------------------------------------------------------------
-# create start population
+# initialisation
 
-population = createPopulation(parameters)
+population = set()
+for citizenNumber in range(parameters['InitialAdults']):
+    # define sex alternating
+    if citizenNumber % 2 == 0:
+        female = True
+    else:
+        female = False
+    # add new citizen 
+    population.add( human(age = parameters['InitialAge'] + random.randint(0,20), female = female) )
 
 #------------------------------------------------------------------------------
-# probe population statistics
+# simulation
 
-statistics = getStatistics(population)
+sizeVec = []
+for year in range(1, parameters['Years']+1):
+    dying = set()
+    for citizen in population:
+        citizen.age += parameters['AgingPerYear']
+        if citizen.age >= parameters['DyingAge']:
+            dying.add(citizen)
+    population -= dying
+    statistics = getStatistics(population)
+    sizeVec.append(statistics['size'])
+
+#------------------------------------------------------------------------------
+# plot
+
+plt.plot(sizeVec)
