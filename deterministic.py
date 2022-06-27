@@ -49,8 +49,8 @@ def getStatistics(population):
         ageList    = [ citizen.age    for citizen in population ] ,
     )
     if statistics['size'] > 0:
-        statistics['femaleRatio'] = sum(statistics['femaleList'])/statistics['size']
-        statistics['ageAverage']  = sum(statistics['ageList'])/len(statistics['ageList'])
+        statistics['femaleRatio'] = sum(statistics['femaleList']) / statistics['size']
+        statistics['ageAverage']  = sum(statistics['ageList'])    / statistics['size']
     else:
         statistics['femaleRatio'] = 0
         statistics['ageAverage']  = None
@@ -73,12 +73,12 @@ def createHouses(parameters):
         houses.add( home() )
     return houses
 
-def findEmptyHouses(houses, inhabitants = 0):
-    emptyHouses = set()
+def findAvailableHouses(houses, inhabitants = 0):
+    availableHouses = set()
     for house in houses:
         if len(house.inhabitants) == inhabitants:
-            emptyHouses.add(house)
-    return emptyHouses
+            availableHouses.add(house)
+    return availableHouses
 
 def findHomeless(population):
     homeless = set()
@@ -110,10 +110,8 @@ houses     = createHouses(parameters)
     
 #     statistics.append(getStatistics(population))
 
-
-
-emptyHouses = findEmptyHouses(houses)
 homeless    = findHomeless(population)
+emptyHouses = findAvailableHouses(houses, inhabitants = 0)
 
 for hobo in homeless:
     if len(emptyHouses) > 0:
@@ -123,11 +121,13 @@ for hobo in homeless:
         emptyHouses.remove(newHouse)
 
 
-# for citizen in population:
-#     print(citizen.house)
+for citizen in population:
+    print(str(citizen.house) + str(citizen))
 
-# for house in houses:
-#     print(house.inhabitants)
+print()
+
+for house in houses:
+    print(str(house) + str(house.inhabitants))
 #     # for citizen in house.inhabitants:
 #     #     print(citizen.female)
 
