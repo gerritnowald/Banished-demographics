@@ -16,7 +16,8 @@ parameters = dict(
     InitialAdults = 8  ,
     InitialAge    = 20 ,
     AgingPerYear  = 1  ,
-    DyingAge      = 80
+    DyingAge      = 80 ,
+    InitialHouses = 4
     )
 
 #------------------------------------------------------------------------------
@@ -32,6 +33,12 @@ class human():
                 self.female = True
             else:
                 self.female = False
+        self.home = None
+
+class home():
+    def __init__(self, capacity = 5):
+        self.capacity = capacity
+        self.inhabitants = set()
 
 #------------------------------------------------------------------------------
 # functions
@@ -53,6 +60,7 @@ def getStatistics(population):
 #------------------------------------------------------------------------------
 # initialisation
 
+# population
 population = set()
 for citizenNumber in range(parameters['InitialAdults']):
     # define sex alternating
@@ -60,24 +68,39 @@ for citizenNumber in range(parameters['InitialAdults']):
         female = True
     else:
         female = False
-    # add new citizen 
-    population.add( human(age = parameters['InitialAge'] + random.randint(0,20), female = female) )
+    # add new citizen
+    # population.add( human(age = parameters['InitialAge'], female = female) )
+    population.add( human(age = parameters['InitialAge'] + random.randint(0,10), female = female) )
+
+# houses
+houses = set()
+for houseNumber in range(parameters['InitialHouses']):
+    houses.add( home() )
 
 #------------------------------------------------------------------------------
 # simulation
 
-sizeVec = []
+statistics = [getStatistics(population)]
+
 for year in range(1, parameters['Years']+1):
+    
+    # aging & dying
     dying = set()
     for citizen in population:
         citizen.age += parameters['AgingPerYear']
         if citizen.age >= parameters['DyingAge']:
             dying.add(citizen)
     population -= dying
-    statistics = getStatistics(population)
-    sizeVec.append(statistics['size'])
+    
+# emptyHouses = set()
+# for house in houses:
+#     if len(house.inhabitants) == 0:
+#         emptyHouses.add(house)
+    
+    statistics.append(getStatistics(population))
 
 #------------------------------------------------------------------------------
 # plot
 
-plt.plot(sizeVec)
+plt.step(range(len(statistics)), 
+         [statistic['size'] for statistic in statistics], where='post')
