@@ -9,8 +9,10 @@ import random
 #------------------------------------------------------------------------------
 # parameters
 
-InitialPopulation = 8
-InitialAge = 20
+parameters = dict(
+    InitialPopulation = 8 ,
+    InitialAge        = 20
+    )
 
 #------------------------------------------------------------------------------
 # classes
@@ -27,20 +29,36 @@ class citizen():
                 self.female = False
 
 #------------------------------------------------------------------------------
-# create start population
+# functions
 
-citizens = set()
+def getStatistics(population):
+    statistics = dict(
+        size       = len(population) ,
+        femaleList = [ citizen.female for citizen in population ] ,
+        ageList    = [ citizen.age    for citizen in population ] ,
+    )
+    statistics['femaleRatio'] = sum(statistics['femaleList'])/statistics['size']
+    statistics['ageAverage']  = sum(statistics['ageList'])/len(statistics['ageList'])
+    return statistics
 
-for n in range(InitialPopulation):
-    # define sex alternating
-    if n % 2 == 0:
-        female = True
-    else:
-        female = False
-    # add new citizen 
-    citizens.add( citizen(age=InitialAge, female=female) )
+def createPopulation(parameters):
+    population = set()
+    for n in range(parameters['InitialPopulation']):
+        # define sex alternating
+        if n % 2 == 0:
+            female = True
+        else:
+            female = False
+        # add new citizen 
+        population.add( citizen(age = parameters['InitialAge'], female = female) )
+    return population
 
 #------------------------------------------------------------------------------
-# 
+# create start population
 
-PopulationFemale = [ citizen.female for citizen in citizens ]
+population = createPopulation(parameters)
+
+#------------------------------------------------------------------------------
+# probe population statistics
+
+statistics = getStatistics(population)
