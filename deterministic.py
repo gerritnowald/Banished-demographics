@@ -31,16 +31,6 @@ class citizen():
 #------------------------------------------------------------------------------
 # functions
 
-def getStatistics(population):
-    statistics = dict(
-        size       = len(population) ,
-        femaleList = [ citizen.female for citizen in population ] ,
-        ageList    = [ citizen.age    for citizen in population ] ,
-    )
-    statistics['femaleRatio'] = sum(statistics['femaleList'])/statistics['size']
-    statistics['ageAverage']  = sum(statistics['ageList'])/len(statistics['ageList'])
-    return statistics
-
 def createPopulation(parameters):
     population = set()
     for n in range(parameters['InitialPopulation']):
@@ -52,6 +42,16 @@ def createPopulation(parameters):
         # add new citizen 
         population.add( citizen(age = parameters['InitialAge'], female = female) )
     return population
+
+def getStatistics(population):
+    statistics = dict(
+        size       = len(population) ,
+        femaleList = [ citizen.female for citizen in population ] ,
+        ageList    = [ citizen.age    for citizen in population ] ,
+    )
+    statistics['femaleRatio'] = sum(statistics['femaleList'])/statistics['size']
+    statistics['ageAverage']  = sum(statistics['ageList'])/len(statistics['ageList'])
+    return statistics
 
 #------------------------------------------------------------------------------
 # create start population
