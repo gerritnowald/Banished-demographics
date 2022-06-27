@@ -13,11 +13,11 @@ import matplotlib.pyplot as plt
 
 parameters = dict(
     Years         = 60 ,
-    InitialAdults = 8  ,
+    InitialAdults = 4  ,
     InitialAge    = 20 ,
     AgingPerYear  = 1  ,
     DyingAge      = 80 ,
-    InitialHouses = 4
+    InitialHouses = 2
     )
 
 #------------------------------------------------------------------------------
@@ -28,12 +28,11 @@ class human():
         self.age    = age
         self.female = female
         if female == None:
-            # define sex randomly
             if random.randint(0,1) == 0:
                 self.female = True
             else:
                 self.female = False
-        self.home = None
+        self.house = None
 
 class home():
     def __init__(self, capacity = 5):
@@ -57,25 +56,42 @@ def getStatistics(population):
         statistics['ageAverage']  = None
     return statistics
 
+def createPopulation(parameters):
+    population = set()
+    for citizenNumber in range(parameters['InitialAdults']):
+        if citizenNumber % 2 == 0:
+            female = True
+        else:
+            female = False
+        population.add( human(age = parameters['InitialAge'], female = female) )
+        # population.add( human(age = parameters['InitialAge'] + random.randint(0,10), female = female) )
+    return population
+
+def createHouses(parameters):
+    houses = set()
+    for houseNumber in range(parameters['InitialHouses']):
+        houses.add( home() )
+    return houses
+
+def findEmptyHouses(houses):
+    emptyHouses = set()
+    for house in houses:
+        if len(house.inhabitants) == 0:
+            emptyHouses.add(house)
+    return emptyHouses
+
+def findHomeless(population):
+    homeless = set()
+    for citizen in population:
+        if citizen.house == None:
+            homeless.add(citizen)
+    return homeless
+
 #------------------------------------------------------------------------------
 # initialisation
 
-# population
-population = set()
-for citizenNumber in range(parameters['InitialAdults']):
-    # define sex alternating
-    if citizenNumber % 2 == 0:
-        female = True
-    else:
-        female = False
-    # add new citizen
-    # population.add( human(age = parameters['InitialAge'], female = female) )
-    population.add( human(age = parameters['InitialAge'] + random.randint(0,10), female = female) )
-
-# houses
-houses = set()
-for houseNumber in range(parameters['InitialHouses']):
-    houses.add( home() )
+population = createPopulation(parameters)
+houses     = createHouses(parameters)
 
 #------------------------------------------------------------------------------
 # simulation
@@ -92,15 +108,15 @@ for year in range(1, parameters['Years']+1):
             dying.add(citizen)
     population -= dying
     
-# emptyHouses = set()
-# for house in houses:
-#     if len(house.inhabitants) == 0:
-#         emptyHouses.add(house)
-    
     statistics.append(getStatistics(population))
+
+
+
+emptyHouses = findEmptyHouses(houses)
+homeless    = findHomeless(population)
 
 #------------------------------------------------------------------------------
 # plot
 
 plt.step(range(len(statistics)), 
-         [statistic['size'] for statistic in statistics], where='post')
+          [statistic['size'] for statistic in statistics], where='post')
