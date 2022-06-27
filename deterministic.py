@@ -73,10 +73,10 @@ def createHouses(parameters):
         houses.add( home() )
     return houses
 
-def findEmptyHouses(houses):
+def findEmptyHouses(houses, inhabitants = 0):
     emptyHouses = set()
     for house in houses:
-        if len(house.inhabitants) == 0:
+        if len(house.inhabitants) == inhabitants:
             emptyHouses.add(house)
     return emptyHouses
 
@@ -96,27 +96,43 @@ houses     = createHouses(parameters)
 #------------------------------------------------------------------------------
 # simulation
 
-statistics = [getStatistics(population)]
+# statistics = [getStatistics(population)]
 
-for year in range(1, parameters['Years']+1):
+# for year in range(1, parameters['Years']+1):
     
-    # aging & dying
-    dying = set()
-    for citizen in population:
-        citizen.age += parameters['AgingPerYear']
-        if citizen.age >= parameters['DyingAge']:
-            dying.add(citizen)
-    population -= dying
+#     # aging & dying
+#     dying = set()
+#     for citizen in population:
+#         citizen.age += parameters['AgingPerYear']
+#         if citizen.age >= parameters['DyingAge']:
+#             dying.add(citizen)
+#     population -= dying
     
-    statistics.append(getStatistics(population))
+#     statistics.append(getStatistics(population))
 
 
 
 emptyHouses = findEmptyHouses(houses)
 homeless    = findHomeless(population)
 
+for hobo in homeless:
+    if len(emptyHouses) > 0:
+        newHouse = random.choice(tuple(emptyHouses))
+        newHouse.inhabitants.add(hobo)
+        hobo.house = newHouse
+        emptyHouses.remove(newHouse)
+
+
+# for citizen in population:
+#     print(citizen.house)
+
+# for house in houses:
+#     print(house.inhabitants)
+#     # for citizen in house.inhabitants:
+#     #     print(citizen.female)
+
 #------------------------------------------------------------------------------
 # plot
 
-plt.step(range(len(statistics)), 
-          [statistic['size'] for statistic in statistics], where='post')
+# plt.step(range(len(statistics)), 
+#           [statistic['size'] for statistic in statistics], where='post')
