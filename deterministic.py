@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 # parameters
 
 parameters = dict(
-    Years         = 60 ,
+    Years         = 55 ,
     InitialHouses = 2  ,
     InitialAdults = 3  ,
     InitialAge    = 20 ,
@@ -114,20 +114,6 @@ for hobo in homeless:
         hobo.house = random.choice(tuple(emptyHouses))
         hobo.house.inhabitants.add(hobo)
         emptyHouses.remove(hobo.house)
-        
-
-
-
-for citizen in population:
-    print(str(citizen) + ' lives in ' + str(citizen.house))
-
-print()
-
-for house in houses:
-    print(str(house) + ' houses ' + str(house.inhabitants))
-    # for citizen in house.inhabitants:
-    #     print(citizen.female)
-
 
 #------------------------------------------------------------------------------
 # simulation
@@ -141,11 +127,25 @@ stats = [getStatistics(population)]
 #         citizen.age += parameters['AgingPerYear']
     
 #     # dying
-#     population -= {citizen for citizen in population if citizen.age >= parameters['DyingAge']}
+#     dying = {citizen for citizen in population if citizen.age >= parameters['DyingAge']}
+#     population -= dying
+#     for citizen in dying:
+#         citizen.house.inhabitants.remove(citizen)
+#         # if citizen.spouse != None:    # removing spouses leads to re-marrying
+#         #     citizen.spouse.spouse = None
     
 #     stats.append(getStatistics(population))
 
 
+for citizen in population:
+    print(str(citizen) + ' lives in ' + str(citizen.house))
+
+print()
+
+for house in houses:
+    print(str(house) + ' houses ' + str(house.inhabitants))
+    # for citizen in house.inhabitants:
+    #     print(citizen.female)
 
 #------------------------------------------------------------------------------
 # plot
