@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 parameters = dict(
     Years         = 60 ,
     InitialHouses = 2  ,
-    InitialAdults = 5  ,
+    InitialAdults = 3  ,
     InitialAge    = 20 ,
     MarryingAge   = 16 ,
     MaxParentAge  = 40 ,
@@ -27,8 +27,10 @@ parameters = dict(
 # classes
 
 class human():
-    def __init__(self, age = 0, female = bool(random.randint(0,1)) ):
+    def __init__(self, age = 0, female = None ):
         self.age    = age
+        if female == None:
+            female = bool(random.randint(0,1))  # random default does not work
         self.female = female
         self.house  = None
         self.spouse = None
@@ -75,34 +77,56 @@ population = { human(age = parameters['InitialAge'], female = bool(n % 2)) for n
 
 
 
-singles = findSingles(population)
-women   = findWomen(singles)
-men     = singles - women
-for woman in women:
-    if len(men) > 0:
-        woman.spouse = random.choice(tuple(men))
-        woman.spouse.spouse = woman
-        men.remove(woman.spouse)
+emptyHouses = { house for house in houses if len(house.inhabitants) == 0 }
+singles     = findSingles(population)
+singlewomen = findWomen(singles)
 
-emptyHouses  = { house for house in houses if len(house.inhabitants) == 0 }
-marriedWomen = women - findSingles(women)
-for woman in marriedWomen:
+for n in range(len(singlewomen)-len(emptyHouses)):
+    singlewomen.pop()   # only as much marriages as empty houses
+
+# marry
+singlemen = singles - singlewomen
+for woman in singlewomen:
+    if len(singlemen) > 0:
+        woman.spouse = random.choice(tuple(singlemen))
+        woman.spouse.spouse = woman
+        singlemen.remove(woman.spouse)
+
+# couples move into empty house
+marriedMovingWomen = singlewomen - findSingles(singlewomen)
+for woman in marriedMovingWomen:
     if len(emptyHouses) > 0:
+        # moving out
+        if woman.house != None:
+            woman.house.inhabitants.remove(woman)
+        if woman.spouse.house != None:
+            woman.spouse.house.inhabitants.remove(woman.spouse)
+        # moving in
         woman.house = random.choice(tuple(emptyHouses))
         woman.spouse.house = woman.house
         woman.house.inhabitants.update([woman, woman.spouse])
         emptyHouses.remove(woman.house)
 
+# homeless move into empty house
+homeless = {citizen for citizen in population if citizen.house == None}
+for hobo in homeless:
+    if len(emptyHouses) > 0:
+        hobo.house = random.choice(tuple(emptyHouses))
+        hobo.house.inhabitants.add(hobo)
+        emptyHouses.remove(hobo.house)
+        
+
+
 
 for citizen in population:
-    print(str(citizen.house) + str(citizen))
+    print(str(citizen) + ' lives in ' + str(citizen.house))
 
 print()
 
 for house in houses:
-    print(str(house) + str(house.inhabitants))
-    for citizen in house.inhabitants:
-        print(citizen.female)
+    print(str(house) + ' houses ' + str(house.inhabitants))
+    # for citizen in house.inhabitants:
+    #     print(citizen.female)
 
 
 #------------------------------------------------------------------------------
@@ -120,10 +144,6 @@ stats = [getStatistics(population)]
 #     population -= {citizen for citizen in population if citizen.age >= parameters['DyingAge']}
     
 #     stats.append(getStatistics(population))
-
-
-# homeless    = {citizen for citizen in population if citizen.house == None}
-# 
 
 
 
