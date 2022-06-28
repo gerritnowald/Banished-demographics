@@ -41,43 +41,69 @@ class home():
 #------------------------------------------------------------------------------
 # functions
 
+def findWomen(group):
+    return { citizen for citizen in group if citizen.female }
+
+def findSingles(group):
+    return { citizen for citizen in group
+            if citizen.spouse == None and citizen.age >= parameters['MarryingAge'] }
+
 def getStatistics(population):
     stats = dict(
         size    = len(population) ,
-        women   = { citizen for citizen in population if citizen.female } ,
-        singles = { citizen for citizen in population if citizen.spouse == None 
-                   and citizen.age >= parameters['MarryingAge'] } ,
+        women   = findWomen(population) ,
+        singles = findSingles(population) ,
         ageList = [ citizen.age    for citizen in population ] ,
     )
     if stats['size'] > 0:
         stats['femaleRatio'] = len(stats['women'])   / stats['size']
+        stats['singleRatio'] = len(stats['singles']) / stats['size']
         stats['ageAverage']  = sum(stats['ageList']) / stats['size']
     else:
         stats['femaleRatio'] = 0
         stats['ageAverage']  = None
     return stats
 
-def findSpouses(group):    
-    women = { citizen for citizen in group if citizen.female }
-    men = population - women
-    for woman in women:
-        if len(men) > 0:
-            woman.spouse = random.choice(tuple(men))
-            woman.spouse.spouse = woman
-            men.remove(woman.spouse)
-
 #------------------------------------------------------------------------------
 # initialisation
 
 houses     = { home() for n in range(parameters['InitialHouses']) }
 
+# population = { human(age = parameters['InitialAge']) for n in range(parameters['InitialAdults']) }
 population = { human(age = parameters['InitialAge'], female = bool(n % 2)) for n in range(parameters['InitialAdults']) }
 # population = { human(age = parameters['InitialAge'] + random.randint(0,10), female = bool(n % 2)) for n in range(parameters['InitialAdults']) }
 
-findSpouses(population)
+
+
+singles = findSingles(population)
+women   = findWomen(singles)
+men     = singles - women
+for woman in women:
+    if len(men) > 0:
+        woman.spouse = random.choice(tuple(men))
+        woman.spouse.spouse = woman
+        men.remove(woman.spouse)
+
+emptyHouses  = { house for house in houses if len(house.inhabitants) == 0 }
+marriedWomen = women - findSingles(women)
+for woman in marriedWomen:
+    if len(emptyHouses) > 0:
+        woman.house = random.choice(tuple(emptyHouses))
+        woman.spouse.house = woman.house
+        woman.house.inhabitants.update([woman, woman.spouse])
+        emptyHouses.remove(woman.house)
+
 
 for citizen in population:
-    print(str(citizen)+str(citizen.spouse))
+    print(str(citizen.house) + str(citizen))
+
+print()
+
+for house in houses:
+    print(str(house) + str(house.inhabitants))
+    for citizen in house.inhabitants:
+        print(citizen.female)
+
 
 #------------------------------------------------------------------------------
 # simulation
@@ -97,26 +123,9 @@ stats = [getStatistics(population)]
 
 
 # homeless    = {citizen for citizen in population if citizen.house == None}
-# emptyHouses = {house for house in houses if len(house.inhabitants) == 0}
-
-# for hobo in homeless:
-#     if len(emptyHouses) > 0:
-#         newHouse = random.choice(tuple(emptyHouses))
-#         newHouse.inhabitants.add(hobo)
-#         hobo.house = newHouse
-#         emptyHouses.remove(newHouse)
+# 
 
 
-
-# for citizen in population:
-#     print(str(citizen.house) + str(citizen))
-
-# print()
-
-# for house in houses:
-#     print(str(house) + str(house.inhabitants))
-#     # for citizen in house.inhabitants:
-#     #     print(citizen.female)
 
 #------------------------------------------------------------------------------
 # plot
