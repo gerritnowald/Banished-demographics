@@ -5,6 +5,7 @@ author: Gerrit Nowald
 """
 
 import random
+
 # import numpy as np
 import matplotlib.pyplot as plt
 
@@ -24,14 +25,9 @@ parameters = dict(
 # classes
 
 class human():
-    def __init__(self, age=0, female=None):
+    def __init__(self, age=0, female = bool(random.randint(0,1)) ):
         self.age    = age
         self.female = female
-        if female == None:
-            if random.randint(0,1) == 0:
-                self.female = True
-            else:
-                self.female = False
         self.house = None
 
 class home():
@@ -43,60 +39,30 @@ class home():
 # functions
 
 def getStatistics(population):
-    statistics = dict(
+    stats = dict(
         size       = len(population) ,
         femaleList = [ citizen.female for citizen in population ] ,
         ageList    = [ citizen.age    for citizen in population ] ,
     )
-    if statistics['size'] > 0:
-        statistics['femaleRatio'] = sum(statistics['femaleList']) / statistics['size']
-        statistics['ageAverage']  = sum(statistics['ageList'])    / statistics['size']
+    if stats['size'] > 0:
+        stats['femaleRatio'] = sum(stats['femaleList']) / stats['size']
+        stats['ageAverage']  = sum(stats['ageList'])    / stats['size']
     else:
-        statistics['femaleRatio'] = 0
-        statistics['ageAverage']  = None
-    return statistics
-
-def createPopulation(parameters):
-    population = set()
-    for citizenNumber in range(parameters['InitialAdults']):
-        if citizenNumber % 2 == 0:
-            female = True
-        else:
-            female = False
-        population.add( human(age = parameters['InitialAge'], female = female) )
-        # population.add( human(age = parameters['InitialAge'] + random.randint(0,10), female = female) )
-    return population
-
-def createHouses(parameters):
-    houses = set()
-    for houseNumber in range(parameters['InitialHouses']):
-        houses.add( home() )
-    return houses
-
-def findAvailableHouses(houses, inhabitants = 0):
-    availableHouses = set()
-    for house in houses:
-        if len(house.inhabitants) == inhabitants:
-            availableHouses.add(house)
-    return availableHouses
-
-def findHomeless(population):
-    homeless = set()
-    for citizen in population:
-        if citizen.house == None:
-            homeless.add(citizen)
-    return homeless
+        stats['femaleRatio'] = 0
+        stats['ageAverage']  = None
+    return stats
 
 #------------------------------------------------------------------------------
 # initialisation
 
-population = createPopulation(parameters)
-houses     = createHouses(parameters)
+population = { human(age = parameters['InitialAge'], female = bool(n % 2)) for n in range(parameters['InitialAdults']) }
+# population = { human(age = parameters['InitialAge'] + random.randint(0,10), female = bool(n % 2)) for n in range(parameters['InitialAdults']) }
+houses     = { home() for n in range(parameters['InitialHouses']) }
 
 #------------------------------------------------------------------------------
 # simulation
 
-# statistics = [getStatistics(population)]
+# stats = [getStatistics(population)]
 
 # for year in range(1, parameters['Years']+1):
     
@@ -108,10 +74,10 @@ houses     = createHouses(parameters)
 #             dying.add(citizen)
 #     population -= dying
     
-#     statistics.append(getStatistics(population))
+#     stats.append(getStatistics(population))
 
-homeless    = findHomeless(population)
-emptyHouses = findAvailableHouses(houses, inhabitants = 0)
+homeless    = {citizen for citizen in population if citizen.house == None}
+emptyHouses = {house for house in houses if len(house.inhabitants) == 0}
 
 for hobo in homeless:
     if len(emptyHouses) > 0:
@@ -128,8 +94,8 @@ print()
 
 for house in houses:
     print(str(house) + str(house.inhabitants))
-#     # for citizen in house.inhabitants:
-#     #     print(citizen.female)
+    # for citizen in house.inhabitants:
+    #     print(citizen.female)
 
 #------------------------------------------------------------------------------
 # plot
