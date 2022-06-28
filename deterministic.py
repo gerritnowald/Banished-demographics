@@ -25,10 +25,10 @@ parameters = dict(
 # classes
 
 class human():
-    def __init__(self, age=0, female = bool(random.randint(0,1)) ):
+    def __init__(self, age = 0, female = bool(random.randint(0,1)) ):
         self.age    = age
         self.female = female
-        self.house = None
+        self.house  = None
 
 class home():
     def __init__(self, capacity = 5):
@@ -66,15 +66,15 @@ houses     = { home() for n in range(parameters['InitialHouses']) }
 
 # for year in range(1, parameters['Years']+1):
     
-#     # aging & dying
-#     dying = set()
+#     # aging
 #     for citizen in population:
 #         citizen.age += parameters['AgingPerYear']
-#         if citizen.age >= parameters['DyingAge']:
-#             dying.add(citizen)
-#     population -= dying
+    
+#     # dying
+#     population -= {citizen for citizen in population if citizen.age >= parameters['DyingAge']}
     
 #     stats.append(getStatistics(population))
+
 
 homeless    = {citizen for citizen in population if citizen.house == None}
 emptyHouses = {house for house in houses if len(house.inhabitants) == 0}
@@ -100,5 +100,4 @@ for house in houses:
 #------------------------------------------------------------------------------
 # plot
 
-# plt.step(range(len(statistics)), 
-#           [statistic['size'] for statistic in statistics], where='post')
+# plt.step(range(len(stats)), [stat['size'] for stat in stats], where='post')
