@@ -47,8 +47,18 @@ def findWomen(group):
     return { citizen for citizen in group if citizen.female }
 
 def findSingles(group):
-    return { citizen for citizen in group
-            if citizen.spouse == None and citizen.age >= parameters['MarryingAge'] }
+    return { citizen for citizen in group if citizen.spouse == None 
+            and citizen.age >= parameters['MarryingAge'] }
+
+def findHomeless(group):
+    return { citizen for citizen in group if citizen.house == None}
+
+def moving(newhouse, group):
+    for citizen in group:
+        if citizen.house != None:
+            citizen.house.inhabitants.remove(citizen)   # moving out
+        newhouse.inhabitants.add(citizen)               # moving in
+        citizen.house = newhouse
 
 
 def fillingHouses(houses, population):
@@ -68,27 +78,20 @@ def fillingHouses(houses, population):
             woman.spouse.spouse = woman
             singlemen.remove(woman.spouse)
     
-    # couples move into empty house
+    # couples move into empty houses
     marriedMovingWomen = singlewomen - findSingles(singlewomen)
     for woman in marriedMovingWomen:
         if len(emptyHouses) > 0:
-            # moving out
-            if woman.house != None:
-                woman.house.inhabitants.remove(woman)
-            if woman.spouse.house != None:
-                woman.spouse.house.inhabitants.remove(woman.spouse)
-            # moving in
-            woman.house = random.choice(tuple(emptyHouses))
-            woman.spouse.house = woman.house
-            woman.house.inhabitants.update([woman, woman.spouse])
-            emptyHouses.remove(woman.house)
+            newhouse = random.choice(tuple(emptyHouses))
+            moving(newhouse, {woman, woman.spouse})
+            emptyHouses.remove(newhouse)
     
-    # homeless move into empty house
-    homeless = {citizen for citizen in population if citizen.house == None}
+    # homeless move into empty houses
+    homeless = findHomeless(population)
     for hobo in homeless:
         if len(emptyHouses) > 0:
-            hobo.house = random.choice(tuple(emptyHouses))
-            hobo.house.inhabitants.add(hobo)
+            newhouse = random.choice(tuple(emptyHouses))
+            moving(newhouse, {hobo})
             emptyHouses.remove(hobo.house)
 
 
@@ -98,12 +101,16 @@ def getStatistics(population):
         ageList = [ citizen.age for citizen in population ] ,
     )
     if stats['size'] > 0:
-        stats['femaleRatio'] = len( findWomen(population) )   / stats['size']
-        stats['singleRatio'] = len( findSingles(population) ) / stats['size']
-        stats['ageAverage']  = sum(stats['ageList']) / stats['size']
+        stats['ageAverage']    = sum(stats['ageList']) / stats['size']
+        stats['femaleRatio']   = len( findWomen(population) )   / stats['size']
+        stats['singleRatio']   = len( findSingles(population) ) / stats['size']
+        stats['homelessRatio'] = len( findHomeless(population) ) / stats['size']
     else:
-        stats['femaleRatio'] = 0
-        stats['ageAverage']  = None
+        stats['ageAverage']    = None
+        stats['femaleRatio']   = 0
+        stats['singleRatio']   = 0
+        stats['homelessRatio'] = 0
+        
     return stats
 
 #------------------------------------------------------------------------------
@@ -119,6 +126,14 @@ fillingHouses(houses, population)
 
 #------------------------------------------------------------------------------
 # simulation
+
+
+
+
+
+
+
+
 
 stats = [getStatistics(population)]
 
