@@ -53,46 +53,44 @@ def findSingles(group):
 def findHomeless(group):
     return { citizen for citizen in group if citizen.house == None}
 
-def moving(newhouse, group):
-    for citizen in group:
-        if citizen.house != None:
-            citizen.house.inhabitants.remove(citizen)   # moving out
-        newhouse.inhabitants.add(citizen)               # moving in
-        citizen.house = newhouse
+
+def moving(emptyHouses, group):
+    if len(emptyHouses) > 0:
+        newhouse = random.choice(tuple(emptyHouses))
+        for citizen in group:
+            if citizen.house != None:
+                citizen.house.inhabitants.remove(citizen)   # moving out
+            newhouse.inhabitants.add(citizen)               # moving in
+            citizen.house = newhouse
+        emptyHouses.remove(newhouse)
+    return emptyHouses
 
 
 def fillingHouses(houses, population):
-
+    
     emptyHouses = { house for house in houses if len(house.inhabitants) == 0 }
+     
+    # marry (if empty house is available)
     singles     = findSingles(population)
     singlewomen = findWomen(singles)
-    
     for n in range(len(singlewomen)-len(emptyHouses)):
-        singlewomen.pop()   # only as much marriages as empty houses
-    
-    # marry
+        singlewomen.pop()
     singlemen = singles - singlewomen
     for woman in singlewomen:
         if len(singlemen) > 0:
             woman.spouse = random.choice(tuple(singlemen))
-            woman.spouse.spouse = woman
+            woman.spouse.spouse = woman     # update husband's spouse
             singlemen.remove(woman.spouse)
     
     # couples move into empty houses
     marriedMovingWomen = singlewomen - findSingles(singlewomen)
     for woman in marriedMovingWomen:
-        if len(emptyHouses) > 0:
-            newhouse = random.choice(tuple(emptyHouses))
-            moving(newhouse, {woman, woman.spouse})
-            emptyHouses.remove(newhouse)
+            emptyHouses = moving(emptyHouses, {woman, woman.spouse})
     
     # homeless move into empty houses
     homeless = findHomeless(population)
     for hobo in homeless:
-        if len(emptyHouses) > 0:
-            newhouse = random.choice(tuple(emptyHouses))
-            moving(newhouse, {hobo})
-            emptyHouses.remove(hobo.house)
+            emptyHouses = moving(emptyHouses, {hobo})
 
 
 def getStatistics(population):
