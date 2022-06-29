@@ -6,20 +6,20 @@ author: Gerrit Nowald
 
 import random
 
-# import numpy as np
 import matplotlib.pyplot as plt
 
 #------------------------------------------------------------------------------
 # parameters
 
 parameters = dict(
-    Years         = 55 ,
-    InitialHouses = 2  ,
-    InitialAdults = 3  ,
+    Years         = 1000 ,
+    InitialHouses = 50  ,
+    InitialAdults = 8  ,
     InitialAge    = 20 ,
     MarryingAge   = 16 ,
     MaxParentAge  = 40 ,
-    DyingAge      = 80 ,
+    DyingAge      = 45 ,
+    HouseCapacity = 5  ,
     AgingPerYear  = 1  ,
     )
 
@@ -36,8 +36,7 @@ class human():
         self.spouse = None
 
 class home():
-    def __init__(self, capacity = 5):
-        self.capacity = capacity
+    def __init__(self):
         self.inhabitants = set()
 
 #------------------------------------------------------------------------------
@@ -56,7 +55,7 @@ def findHomeless(group):
 
 def moving(emptyHouses, group):
     if len(emptyHouses) > 0:
-        newhouse = random.choice(tuple(emptyHouses))
+        newhouse = random.choice(tuple(emptyHouses))    # 1 house for several citizen
         for citizen in group:
             if citizen.house != None:
                 citizen.house.inhabitants.remove(citizen)   # moving out
@@ -94,17 +93,15 @@ def fillingHouses(houses, population):
 
 
 def getStatistics(population):
-    stats = dict(
-        size    = len(population) ,
-        ageList = [ citizen.age for citizen in population ] ,
-    )
+    ageList = [ citizen.age for citizen in population ]
+    stats = dict( size = len(population) )
     if stats['size'] > 0:
-        stats['ageAverage']    = sum(stats['ageList']) / stats['size']
-        stats['femaleRatio']   = len( findWomen(population) )   / stats['size']
-        stats['singleRatio']   = len( findSingles(population) ) / stats['size']
-        stats['homelessRatio'] = len( findHomeless(population) ) / stats['size']
+        stats['ageAverage']    = round(sum( ageList ) / stats['size'])
+        stats['femaleRatio']   = round(len( findWomen(population) )   / stats['size'],2)
+        stats['singleRatio']   = round(len( findSingles(population) ) / stats['size'],2)
+        stats['homelessRatio'] = round(len( findHomeless(population) ) / stats['size'],2)
     else:
-        stats['ageAverage']    = None
+        stats['ageAverage']    = 0
         stats['femaleRatio']   = 0
         stats['singleRatio']   = 0
         stats['homelessRatio'] = 0
@@ -120,49 +117,82 @@ houses     = { home() for n in range(parameters['InitialHouses']) }
 population = { human(age = parameters['InitialAge'], female = bool(n % 2)) for n in range(parameters['InitialAdults']) }
 # population = { human(age = parameters['InitialAge'] + random.randint(0,10), female = bool(n % 2)) for n in range(parameters['InitialAdults']) }
 
-fillingHouses(houses, population)
-
 #------------------------------------------------------------------------------
 # simulation
 
-
-
-
-
-
-
-
-
 stats = [getStatistics(population)]
 
-# for year in range(1, parameters['Years']+1):
+for year in range(1, parameters['Years']+1):
     
-#     # aging
-#     for citizen in population:
-#         citizen.age += parameters['AgingPerYear']
+    # aging
+    for citizen in population:
+        citizen.age += parameters['AgingPerYear']
     
-#     # dying
-#     dying = {citizen for citizen in population if citizen.age >= parameters['DyingAge']}
-#     population -= dying
-#     for citizen in dying:
-#         citizen.house.inhabitants.remove(citizen)
-#         # if citizen.spouse != None:    # removing spouses leads to re-marrying
-#         #     citizen.spouse.spouse = None
+    # dying
+    dying = {citizen for citizen in population if citizen.age >= parameters['DyingAge']}
+    population -= dying
+    for citizen in dying:  
+        citizen.house.inhabitants.remove(citizen)
+        # if citizen.spouse != None:    # removing spouses leads to re-marrying
+        #     citizen.spouse.spouse = None
+        
+    fillingHouses(houses, population)
     
-#     stats.append(getStatistics(population))
-
-
-for citizen in population:
-    print(str(citizen) + ' lives in ' + str(citizen.house))
-
-print()
-
-for house in houses:
-    print(str(house) + ' houses ' + str(house.inhabitants))
-    # for citizen in house.inhabitants:
-    #     print(citizen.female)
+    # offspring
+    marriedwomen = { citizen for citizen in population if citizen.female
+                    and citizen.spouse != None }
+    for woman in marriedwomen:
+        if (woman.house == woman.spouse.house 
+            and min(woman.age,woman.spouse.age) >= parameters['MarryingAge'] 
+            and max(woman.age,woman.spouse.age) <= parameters['MaxParentAge'] 
+            and len(woman.house.inhabitants)    <= parameters['HouseCapacity']):
+                Newborn = human()
+                population.add(Newborn)
+                Newborn.house = woman.house
+                woman.house.inhabitants.add(Newborn)
+    
+    stats.append(getStatistics(population))
 
 #------------------------------------------------------------------------------
-# plot
+# results
 
-# plt.step(range(len(stats)), [stat['size'] for stat in stats], where='post')
+print(stats[-1])
+
+
+# for citizen in population:
+#     print(str(citizen) + ' lives in ' + str(citizen.house))
+
+# print()
+
+# for house in houses:
+#     print(str(house) + ' houses ' + str(house.inhabitants))
+#     # for citizen in house.inhabitants:
+#     #     print(citizen.female)
+
+
+plt.close('all')
+plt.style.use('dark_background')
+# plt.style.use('seaborn-dark')
+
+plt.figure()
+
+# plt.subplot(311)
+plt.step(range(len(stats)), [stat['size'] for stat in stats], where='post', color='gold')
+plt.xlabel('years')
+plt.ylabel('citizens')
+plt.tight_layout()
+
+# plt.subplot(312)
+# plt.step(range(len(stats)), [stat['singleRatio'] for stat in stats], where='post', color='gold')
+# # plt.xlabel('years')
+# plt.ylabel('ratio singles')
+# plt.tight_layout()
+
+# plt.subplot(313)
+# plt.step(range(len(stats)), [stat['ageAverage'] for stat in stats], where='post', color='gold')
+# plt.xlabel('years')
+# plt.ylabel('average age')
+# plt.tight_layout()
+
+plt.show()
+# plt.savefig('population.png', transparent=True)
