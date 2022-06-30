@@ -13,13 +13,15 @@ from cycler import cycler
 # parameters
 
 parameters = dict(
-    Years         = 100 ,   # length of simulation
-    InitialHouses = 50  ,
+    Years         = 300 ,   # length of simulation
     InitialAdults = 8  ,
     InitialAge    = 20 ,
     MarryingAge   = 16 ,
     MaxParentAge  = 40 ,
-    DyingAge      = 40 ,
+    DyingAge      = 50 ,
+    InitialHouses = 4  ,
+    HousesPerYear = 1  ,
+    MaxHouses     = 100 ,
     HouseCapacity = 5  ,
     AgingPerYear  = 4  ,
     StatsAgeRange = 10 ,    # size of age groups in years for statistics
@@ -84,8 +86,9 @@ def aging(population):
     # dying
     dying = {citizen for citizen in population if citizen.age >= parameters['DyingAge']}
     population -= dying
-    for citizen in dying:  
-        citizen.house.inhabitants.remove(citizen)
+    for citizen in dying:
+        if citizen.house != None:
+            citizen.house.inhabitants.remove(citizen)
         # if citizen.spouse != None:    # removing spouses leads to re-marrying
         #     citizen.spouse.spouse = None
 
@@ -116,12 +119,14 @@ def getStatistics(population, houses):
         stats['ratio females']    = round( len( { citizen for citizen in population if citizen.female } ) / stats['citizens'] , 2)
         stats['average age']      = round( sum(ageList) / stats['citizens'] )
         stats['ratio singles']    = round( len( findSingles(population) ) / stats['citizens'], 2)
-        stats['mean inhabitants'] = round( sum([ len(house.inhabitants) for house in houses ]) / len(houses) , 1)
     else:
         stats['citizens age groups'] = [0 for age in range(0, parameters['DyingAge'], parameters['StatsAgeRange']) ]
         stats['ratio females']    = 0
         stats['average age']      = 0
-        stats['ratio singles']    = 0        
+        stats['ratio singles']    = 0
+    if len(houses) > 0:
+        stats['mean inhabitants'] = round( sum([ len(house.inhabitants) for house in houses ]) / len(houses) , 1)
+    else:
         stats['mean inhabitants'] = 0
     return stats
 
@@ -171,7 +176,10 @@ population = { human(age = parameters['InitialAge'], female = bool(n % 2)) for n
 
 stats = [ getStatistics(population, houses) ]
 
-for year in range(1, parameters['Years']+1):
+for year in range(1, parameters['Years'] + 1):
+    
+    if len(houses) < parameters['MaxHouses']:
+        houses.update( { home() for n in range(parameters['HousesPerYear']) } )
        
     aging(population)
     
@@ -209,8 +217,8 @@ plt.figure()
 # plt.rcParams['axes.prop_cycle'] = cycler(color=c)
 
 plt.subplot(221)
-# plot('citizens')
-plotDemographics(legend = False)
+plot('citizens')
+# plotDemographics(legend = False)
 
 plt.subplot(224)
 plot('average age')
