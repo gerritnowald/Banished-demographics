@@ -73,12 +73,41 @@ def fillingHouses(houses, population):
                 if citizen.house != None:
                     citizen.house.inhabitants.remove(citizen)   # moving out
                 newhouse.inhabitants.add(citizen)               # moving in
-                citizen.house = newhouse       
+                citizen.house = newhouse
+
+
+def aging(population):
+        
+    for citizen in population:
+        citizen.age += parameters['AgingPerYear']
+    
+    # dying
+    dying = {citizen for citizen in population if citizen.age >= parameters['DyingAge']}
+    population -= dying
+    for citizen in dying:  
+        citizen.house.inhabitants.remove(citizen)
+        # if citizen.spouse != None:    # removing spouses leads to re-marrying
+        #     citizen.spouse.spouse = None
+
+
+def offspring(population):
+    
+    marriedwomen = { citizen for citizen in population if citizen.female
+                    and citizen.spouse != None }
+    for woman in marriedwomen:
+        if (woman.house == woman.spouse.house 
+            and min(woman.age, woman.spouse.age) >= parameters['MarryingAge'] 
+            and max(woman.age, woman.spouse.age) <= parameters['MaxParentAge'] 
+            and len(woman.house.inhabitants)     <  parameters['HouseCapacity']):
+                Newborn = human()
+                population.add(Newborn)
+                Newborn.house = woman.house
+                woman.house.inhabitants.add(Newborn)
 
 
 def getStatistics(population):
     ageList = [ citizen.age for citizen in population ]
-    stats = dict( size = len(population) )
+    stats   = dict( size = len(population) )
     if stats['size'] > 0:
         stats['ageAverage']    = round(sum( ageList ) / stats['size'])
         stats['femaleRatio']   = round(len( { citizen for citizen in population if citizen.female } ) / stats['size'],2)
@@ -104,33 +133,12 @@ population = { human(age = parameters['InitialAge'], female = bool(n % 2)) for n
 stats = [ getStatistics(population) ]
 
 for year in range(1, parameters['Years']+1):
+       
+    aging(population)
     
-    # aging
-    for citizen in population:
-        citizen.age += parameters['AgingPerYear']
-    
-    # dying
-    dying = {citizen for citizen in population if citizen.age >= parameters['DyingAge']}
-    population -= dying
-    for citizen in dying:  
-        citizen.house.inhabitants.remove(citizen)
-        # if citizen.spouse != None:    # removing spouses leads to re-marrying
-        #     citizen.spouse.spouse = None
-        
     fillingHouses(houses, population)
     
-    # offspring
-    marriedwomen = { citizen for citizen in population if citizen.female
-                    and citizen.spouse != None }
-    for woman in marriedwomen:
-        if (woman.house == woman.spouse.house 
-            and min(woman.age, woman.spouse.age) >= parameters['MarryingAge'] 
-            and max(woman.age, woman.spouse.age) <= parameters['MaxParentAge'] 
-            and len(woman.house.inhabitants)     <  parameters['HouseCapacity']):
-                Newborn = human()
-                population.add(Newborn)
-                Newborn.house = woman.house
-                woman.house.inhabitants.add(Newborn)
+    offspring(population)
     
     stats.append(getStatistics(population))
 
