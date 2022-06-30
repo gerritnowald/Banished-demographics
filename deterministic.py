@@ -5,14 +5,15 @@ author: Gerrit Nowald
 """
 
 import random
-
 import matplotlib.pyplot as plt
+import numpy as np
+from cycler import cycler
 
 #------------------------------------------------------------------------------
 # parameters
 
 parameters = dict(
-    Years         = 100 ,
+    Years         = 100 ,   # length of simulation
     InitialHouses = 50  ,
     InitialAdults = 8  ,
     InitialAge    = 20 ,
@@ -21,6 +22,7 @@ parameters = dict(
     DyingAge      = 40 ,
     HouseCapacity = 5  ,
     AgingPerYear  = 4  ,
+    StatsAgeRange = 10 ,    # size of age groups in years for statistics
     )
 
 #------------------------------------------------------------------------------
@@ -48,7 +50,6 @@ def findSingles(group):
 
 
 def fillingHouses(houses, population):
-    
     emptyHouses = { house for house in houses if len(house.inhabitants) == 0 }
     
     # marry (if empty house is available)
@@ -76,8 +77,7 @@ def fillingHouses(houses, population):
                 citizen.house = newhouse
 
 
-def aging(population):
-        
+def aging(population):  
     for citizen in population:
         citizen.age += parameters['AgingPerYear']
     
@@ -91,7 +91,6 @@ def aging(population):
 
 
 def offspring(population):
-    
     marriedwomen = { citizen for citizen in population if citizen.female
                     and citizen.spouse != None }
     for woman in marriedwomen:
@@ -106,14 +105,20 @@ def offspring(population):
 
 
 def getStatistics(population, houses):
-    ageList = [ citizen.age for citizen in population ]
+    ageList = [ citizen.age for citizen in population ]  
     stats   = dict( citizens = len(population) )
     if stats['citizens'] > 0:
+        stats['citizens age groups'] = []
+        for age in range(0, parameters['DyingAge'], parameters['StatsAgeRange'] ):
+            stats['citizens age groups'].append( len( { citizen for citizen in population 
+                  if  citizen.age >= age 
+                  and citizen.age <  age + parameters['StatsAgeRange'] } ) )
         stats['ratio females']    = round( len( { citizen for citizen in population if citizen.female } ) / stats['citizens'] , 2)
         stats['average age']      = round( sum(ageList) / stats['citizens'] )
         stats['ratio singles']    = round( len( findSingles(population) ) / stats['citizens'], 2)
         stats['mean inhabitants'] = round( sum([ len(house.inhabitants) for house in houses ]) / len(houses) , 1)
     else:
+        stats['citizens age groups'] = [0 for age in range(0, parameters['DyingAge'], parameters['StatsAgeRange']) ]
         stats['ratio females']    = 0
         stats['average age']      = 0
         stats['ratio singles']    = 0        
@@ -128,6 +133,26 @@ def plot(value, steps = False, grid = False):
         plt.plot(range(len(stats)), [stat[value] for stat in stats], color='gold')
     plt.xlabel('years')
     plt.ylabel(value)
+    if grid:
+        plt.grid()
+    plt.tight_layout()
+
+
+def plotDemographics(legend = True, grid = False):    
+    Demographics = np.zeros([len(stats[-1]['citizens age groups']), len(stats)])
+    for n in range(len(stats[-1]['citizens age groups'])):
+        Demographics[n,:] = [stat['citizens age groups'][n] for stat in stats]
+    
+    plt.bar(range(len(stats)), Demographics[0,:], width = 1,
+            label = '0-' + str(parameters['StatsAgeRange'] - 1) )
+    for n in range(1, len(stats[-1]['citizens age groups'])):
+        plt.bar(range(len(stats)), Demographics[n,:], width = 1,
+                bottom = sum(Demographics[:n,:]),
+                label = str(parameters['StatsAgeRange']*n) + '-' + str(parameters['StatsAgeRange']*(n+1)-1) )
+    if legend:
+        plt.legend()
+    plt.xlabel('years')
+    plt.ylabel('citizens')
     if grid:
         plt.grid()
     plt.tight_layout()
@@ -178,8 +203,14 @@ plt.style.use('dark_background')
 
 plt.figure()
 
+# c = plt.get_cmap('Wistia')
+    
+# c = plt.get_cmap('tab20c').colors
+# plt.rcParams['axes.prop_cycle'] = cycler(color=c)
+
 plt.subplot(221)
-plot('citizens')
+# plot('citizens')
+plotDemographics(legend = False)
 
 plt.subplot(224)
 plot('average age')
