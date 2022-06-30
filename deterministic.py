@@ -12,15 +12,15 @@ import matplotlib.pyplot as plt
 # parameters
 
 parameters = dict(
-    Years         = 1000 ,
+    Years         = 300 ,
     InitialHouses = 50  ,
     InitialAdults = 8  ,
     InitialAge    = 20 ,
     MarryingAge   = 16 ,
     MaxParentAge  = 40 ,
-    DyingAge      = 45 ,
+    DyingAge      = 40 ,
     HouseCapacity = 5  ,
-    AgingPerYear  = 1  ,
+    AgingPerYear  = 4  ,
     )
 
 #------------------------------------------------------------------------------
@@ -42,38 +42,20 @@ class home():
 #------------------------------------------------------------------------------
 # functions
 
-def findWomen(group):
-    return { citizen for citizen in group if citizen.female }
-
 def findSingles(group):
     return { citizen for citizen in group if citizen.spouse == None 
             and citizen.age >= parameters['MarryingAge'] }
-
-def findHomeless(group):
-    return { citizen for citizen in group if citizen.house == None}
-
-
-def moving(emptyHouses, group):
-    if len(emptyHouses) > 0:
-        newhouse = random.choice(tuple(emptyHouses))    # 1 house for several citizen
-        for citizen in group:
-            if citizen.house != None:
-                citizen.house.inhabitants.remove(citizen)   # moving out
-            newhouse.inhabitants.add(citizen)               # moving in
-            citizen.house = newhouse
-        emptyHouses.remove(newhouse)
-    return emptyHouses
 
 
 def fillingHouses(houses, population):
     
     emptyHouses = { house for house in houses if len(house.inhabitants) == 0 }
-     
+    
     # marry (if empty house is available)
     singles     = findSingles(population)
-    singlewomen = findWomen(singles)
+    singlewomen = { citizen for citizen in singles if citizen.female }
     for n in range(len(singlewomen)-len(emptyHouses)):
-        singlewomen.pop()
+        singlewomen.pop()   # only as much marriages as empty houses
     singlemen = singles - singlewomen
     for woman in singlewomen:
         if len(singlemen) > 0:
@@ -84,12 +66,14 @@ def fillingHouses(houses, population):
     # couples move into empty houses
     marriedMovingWomen = singlewomen - findSingles(singlewomen)
     for woman in marriedMovingWomen:
-            emptyHouses = moving(emptyHouses, {woman, woman.spouse})
-    
-    # homeless move into empty houses
-    homeless = findHomeless(population)
-    for hobo in homeless:
-            emptyHouses = moving(emptyHouses, {hobo})
+        if len(emptyHouses) > 0:
+            newhouse = random.choice(tuple(emptyHouses))    # 1 house for several citizen
+            emptyHouses.remove(newhouse)
+            for citizen in {woman, woman.spouse}:
+                if citizen.house != None:
+                    citizen.house.inhabitants.remove(citizen)   # moving out
+                newhouse.inhabitants.add(citizen)               # moving in
+                citizen.house = newhouse       
 
 
 def getStatistics(population):
@@ -97,15 +81,12 @@ def getStatistics(population):
     stats = dict( size = len(population) )
     if stats['size'] > 0:
         stats['ageAverage']    = round(sum( ageList ) / stats['size'])
-        stats['femaleRatio']   = round(len( findWomen(population) )   / stats['size'],2)
+        stats['femaleRatio']   = round(len( { citizen for citizen in population if citizen.female } ) / stats['size'],2)
         stats['singleRatio']   = round(len( findSingles(population) ) / stats['size'],2)
-        stats['homelessRatio'] = round(len( findHomeless(population) ) / stats['size'],2)
     else:
         stats['ageAverage']    = 0
         stats['femaleRatio']   = 0
-        stats['singleRatio']   = 0
-        stats['homelessRatio'] = 0
-        
+        stats['singleRatio']   = 0        
     return stats
 
 #------------------------------------------------------------------------------
@@ -120,7 +101,7 @@ population = { human(age = parameters['InitialAge'], female = bool(n % 2)) for n
 #------------------------------------------------------------------------------
 # simulation
 
-stats = [getStatistics(population)]
+stats = [ getStatistics(population) ]
 
 for year in range(1, parameters['Years']+1):
     
@@ -143,9 +124,9 @@ for year in range(1, parameters['Years']+1):
                     and citizen.spouse != None }
     for woman in marriedwomen:
         if (woman.house == woman.spouse.house 
-            and min(woman.age,woman.spouse.age) >= parameters['MarryingAge'] 
-            and max(woman.age,woman.spouse.age) <= parameters['MaxParentAge'] 
-            and len(woman.house.inhabitants)    <= parameters['HouseCapacity']):
+            and min(woman.age, woman.spouse.age) >= parameters['MarryingAge'] 
+            and max(woman.age, woman.spouse.age) <= parameters['MaxParentAge'] 
+            and len(woman.house.inhabitants)     <  parameters['HouseCapacity']):
                 Newborn = human()
                 population.add(Newborn)
                 Newborn.house = woman.house
