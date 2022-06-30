@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 # parameters
 
 parameters = dict(
-    Years         = 300 ,
+    Years         = 100 ,
     InitialHouses = 50  ,
     InitialAdults = 8  ,
     InitialAge    = 20 ,
@@ -105,18 +105,32 @@ def offspring(population):
                 woman.house.inhabitants.add(Newborn)
 
 
-def getStatistics(population):
+def getStatistics(population, houses):
     ageList = [ citizen.age for citizen in population ]
-    stats   = dict( size = len(population) )
-    if stats['size'] > 0:
-        stats['ageAverage']    = round(sum( ageList ) / stats['size'])
-        stats['femaleRatio']   = round(len( { citizen for citizen in population if citizen.female } ) / stats['size'],2)
-        stats['singleRatio']   = round(len( findSingles(population) ) / stats['size'],2)
+    stats   = dict( citizens = len(population) )
+    if stats['citizens'] > 0:
+        stats['ratio females']    = round( len( { citizen for citizen in population if citizen.female } ) / stats['citizens'] , 2)
+        stats['average age']      = round( sum(ageList) / stats['citizens'] )
+        stats['ratio singles']    = round( len( findSingles(population) ) / stats['citizens'], 2)
+        stats['mean inhabitants'] = round( sum([ len(house.inhabitants) for house in houses ]) / len(houses) , 1)
     else:
-        stats['ageAverage']    = 0
-        stats['femaleRatio']   = 0
-        stats['singleRatio']   = 0        
+        stats['ratio females']    = 0
+        stats['average age']      = 0
+        stats['ratio singles']    = 0        
+        stats['mean inhabitants'] = 0
     return stats
+
+
+def plot(value, steps = False, grid = False):
+    if steps:
+        plt.step(range(len(stats)), [stat[value] for stat in stats], where='post', color='gold')
+    else:
+        plt.plot(range(len(stats)), [stat[value] for stat in stats], color='gold')
+    plt.xlabel('years')
+    plt.ylabel(value)
+    if grid:
+        plt.grid()
+    plt.tight_layout()
 
 #------------------------------------------------------------------------------
 # initialisation
@@ -130,7 +144,7 @@ population = { human(age = parameters['InitialAge'], female = bool(n % 2)) for n
 #------------------------------------------------------------------------------
 # simulation
 
-stats = [ getStatistics(population) ]
+stats = [ getStatistics(population, houses) ]
 
 for year in range(1, parameters['Years']+1):
        
@@ -140,10 +154,10 @@ for year in range(1, parameters['Years']+1):
     
     offspring(population)
     
-    stats.append(getStatistics(population))
+    stats.append( getStatistics(population, houses) )
 
 #------------------------------------------------------------------------------
-# results
+#%% results
 
 print(stats[-1])
 
@@ -161,27 +175,20 @@ print(stats[-1])
 
 plt.close('all')
 plt.style.use('dark_background')
-# plt.style.use('seaborn-dark')
 
 plt.figure()
 
-# plt.subplot(311)
-plt.step(range(len(stats)), [stat['size'] for stat in stats], where='post', color='gold')
-plt.xlabel('years')
-plt.ylabel('citizens')
-plt.tight_layout()
+plt.subplot(221)
+plot('citizens')
 
-# plt.subplot(312)
-# plt.step(range(len(stats)), [stat['singleRatio'] for stat in stats], where='post', color='gold')
-# # plt.xlabel('years')
-# plt.ylabel('ratio singles')
-# plt.tight_layout()
+plt.subplot(224)
+plot('average age')
 
-# plt.subplot(313)
-# plt.step(range(len(stats)), [stat['ageAverage'] for stat in stats], where='post', color='gold')
-# plt.xlabel('years')
-# plt.ylabel('average age')
-# plt.tight_layout()
+plt.subplot(222)
+plot('ratio singles')
+
+plt.subplot(223)
+plot('mean inhabitants')
 
 plt.show()
 # plt.savefig('population.png', transparent=True)
