@@ -13,7 +13,7 @@ from cycler import cycler
 # parameters
 
 parameters = dict(
-    Years         = 300 ,   # length of simulation
+    Years         = 200 ,   # length of simulation
     InitialAdults = 8  ,
     InitialAge    = 20 ,
     MarryingAge   = 16 ,
@@ -21,7 +21,7 @@ parameters = dict(
     DyingAge      = 45 ,
     InitialHouses = 4  ,
     HousesPerYear = 1  ,
-    MaxHouses     = 100 ,
+    MaxHouses     = 50 ,
     HouseCapacity = 5  ,
     AgingPerYear  = 4  ,
     StatsAgeRange = 10 ,    # size of age groups in years for statistics
@@ -214,18 +214,18 @@ plt.figure()
 # c = plt.get_cmap('tab20c').colors
 # plt.rcParams['axes.prop_cycle'] = cycler(color=c)
 
-plt.subplot(221)
-plot('citizens')
-# plotDemographics(legend = False)
+# plt.subplot(221)
+# plot('citizens')
+plotDemographics(legend = True)
 
-plt.subplot(224)
-plot('average age')
-
-plt.subplot(222)
-plot('ratio singles')
-
-plt.subplot(223)
-plot('mean inhabitants')
+# plt.subplot(224)
+# plot('average age')
+#
+# plt.subplot(222)
+# plot('ratio singles')
+#
+# plt.subplot(223)
+# plot('mean inhabitants')
 
 plt.show()
-# plt.savefig('population.png', transparent=True)
+# plt.savefig('population.png', transparent=False)
