@@ -7,7 +7,6 @@ author: Gerrit Nowald
 import random
 import matplotlib.pyplot as plt
 import numpy as np
-from cycler import cycler
 
 #------------------------------------------------------------------------------
 # parameters
@@ -193,26 +192,10 @@ for year in range(1, parameters['Years'] + 1):
 print(stats[-1])
 
 
-# for citizen in population:
-#     print(str(citizen) + ' lives in ' + str(citizen.house))
-
-# print()
-
-# for house in houses:
-#     print(str(house) + ' houses ' + str(house.inhabitants))
-#     # for citizen in house.inhabitants:
-#     #     print(citizen.female)
-
-
 plt.close('all')
 plt.style.use('dark_background')
 
 plt.figure()
-
-# c = plt.get_cmap('Wistia')
-
-# c = plt.get_cmap('tab20c').colors
-# plt.rcParams['axes.prop_cycle'] = cycler(color=c)
 
 # plt.subplot(221)
 # plot('citizens')
