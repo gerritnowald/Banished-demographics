@@ -4,6 +4,7 @@ Simulation of demographic development in Banished
 author: Gerrit Nowald
 """
 
+import statistics
 import random
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,12 +13,12 @@ import numpy as np
 # parameters
 
 parameters = dict(
-    Years         = 200 ,   # length of simulation
+    Years         = 100 ,   # length of simulation
     InitialAdults = 8  ,
     InitialAge    = 20 ,
     MarryingAge   = 16 ,
     MaxParentAge  = 40 ,
-    DyingAge      = 45 ,
+    DyingAge      = 80 ,
     InitialHouses = 4  ,
     HousesPerYear = 1  ,
     MaxHouses     = 50 ,
@@ -90,15 +91,19 @@ def aging(population):
         #     citizen.spouse.spouse = None
 
 
+femaleSwitch = True
+
 def offspring(population):
     marriedwomen = { citizen for citizen in population if citizen.female
                     and citizen.spouse != None }
+    global femaleSwitch
     for woman in marriedwomen:
         if (woman.house == woman.spouse.house
             and min(woman.age, woman.spouse.age) >= parameters['MarryingAge']
             and max(woman.age, woman.spouse.age) <= parameters['MaxParentAge']
             and len(woman.house.inhabitants)     <  parameters['HouseCapacity']):
-                Newborn = human()
+                Newborn = human(female = femaleSwitch)
+                femaleSwitch = not femaleSwitch     # sex alternating
                 population.add(Newborn)
                 Newborn.house = woman.house
                 woman.house.inhabitants.add(Newborn)
@@ -114,11 +119,13 @@ def getStatistics(population, houses):
                   if  citizen.age >= age
                   and citizen.age <  age + parameters['StatsAgeRange'] } ) )
         stats['average age']      = round( sum(ageList) / stats['citizens'] )
+        stats['median age']       = round( statistics.median(ageList) )
         stats['ratio females']    = round( len( { citizen for citizen in population if citizen.female } ) / stats['citizens'] , 2)
         stats['ratio singles']    = round( len( findSingles(population) ) / stats['citizens'], 2)
     else:
         stats['citizens age groups'] = [0 for age in range(0, parameters['DyingAge'], parameters['StatsAgeRange']) ]
         stats['average age']      = 0
+        stats['median age']       = 0
         stats['ratio females']    = 0
         stats['ratio singles']    = 0
     if len(houses) > 0:
@@ -203,6 +210,7 @@ plotDemographics(legend = True)
 
 # plt.subplot(224)
 # plot('average age')
+# plot('median age')
 #
 # plt.subplot(222)
 # plot('ratio singles')
