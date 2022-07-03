@@ -18,13 +18,13 @@ parameters = dict(
     InitialAge    = 20 ,
     MarryingAge   = 16 ,
     MaxParentAge  = 40 ,
-    DyingAge      = 80 ,
+    DyingAge      = 50 ,
     InitialHouses = 4  ,
     HousesPerYear = 1  ,
     MaxHouses     = 50 ,
     HouseCapacity = 5  ,
     AgingPerYear  = 4  ,
-    StatsAgeRange = 10 ,    # size of age groups in years for statistics
+    StatsAgeRange = 9 ,    # size of age groups in years for statistics
     )
 
 #------------------------------------------------------------------------------
@@ -114,7 +114,7 @@ def getStatistics(population, houses):
     stats   = dict( citizens = len(population) )
     if stats['citizens'] > 0:
         stats['citizens age groups'] = []
-        for age in range(0, parameters['DyingAge'], parameters['StatsAgeRange'] ):
+        for age in range(0, parameters['DyingAge']+1, parameters['StatsAgeRange'] ):
             stats['citizens age groups'].append( len( { citizen for citizen in population
                   if  citizen.age >= age
                   and citizen.age <  age + parameters['StatsAgeRange'] } ) )
@@ -123,14 +123,20 @@ def getStatistics(population, houses):
         stats['ratio females']    = round( len( { citizen for citizen in population if citizen.female } ) / stats['citizens'] , 2)
         stats['ratio singles']    = round( len( findSingles(population) ) / stats['citizens'], 2)
     else:
-        stats['citizens age groups'] = [0 for age in range(0, parameters['DyingAge'], parameters['StatsAgeRange']) ]
+        stats['citizens age groups'] = [0 for age in range(0, parameters['DyingAge']+1, parameters['StatsAgeRange']) ]
         stats['average age']      = 0
         stats['median age']       = 0
         stats['ratio females']    = 0
         stats['ratio singles']    = 0
     if len(houses) > 0:
+        stats['inhabitants groups'] = []
+        for inhabitants in range(0, parameters['HouseCapacity']+1 ):
+            stats['inhabitants groups'].append( len( { house for house in houses
+                  if  len(house.inhabitants) >= inhabitants
+                  and len(house.inhabitants) <  inhabitants + 1 } ) )
         stats['mean inhabitants'] = round( sum([ len(house.inhabitants) for house in houses ]) / len(houses) , 1)
     else:
+        stats['inhabitants groups'] = [0 for inhabitants in range(0, parameters['HouseCapacity']) ]
         stats['mean inhabitants'] = 0
     return stats
 
@@ -162,6 +168,26 @@ def plotDemographics(legend = True, grid = False):
         plt.legend()
     plt.xlabel('years')
     plt.ylabel('citizens')
+    if grid:
+        plt.grid()
+    plt.tight_layout()
+
+
+def plotInhabitants(legend = True, grid = False):
+    Inhabitants = np.zeros([len(stats[-1]['inhabitants groups']), len(stats)])
+    for n in range(len(stats[-1]['inhabitants groups'])):
+        Inhabitants[n,:] = [stat['inhabitants groups'][n] for stat in stats]
+
+    plt.bar(range(len(stats)), Inhabitants[0,:], width = 1, label = 'empty' )
+    for n in range(1, len(stats[-1]['inhabitants groups'])-1 ):
+        plt.bar(range(len(stats)), Inhabitants[n,:], width = 1,
+                bottom = sum(Inhabitants[:n,:]), label = str(n) + ' inhabitants' )
+    plt.bar(range(len(stats)), Inhabitants[-1,:], width = 1,
+            bottom = sum(Inhabitants[:-1,:]), label = 'full' )
+    if legend:
+        plt.legend()
+    plt.xlabel('years')
+    plt.ylabel('houses')
     if grid:
         plt.grid()
     plt.tight_layout()
@@ -204,7 +230,7 @@ plt.style.use('dark_background')
 
 plt.figure()
 
-# plt.subplot(221)
+plt.subplot(211)
 # plot('citizens')
 plotDemographics(legend = True)
 
@@ -215,8 +241,9 @@ plotDemographics(legend = True)
 # plt.subplot(222)
 # plot('ratio singles')
 #
-# plt.subplot(223)
+plt.subplot(212)
 # plot('mean inhabitants')
+plotInhabitants(legend = True)
 
 plt.show()
 # plt.savefig('population.png', transparent=False)
