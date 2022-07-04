@@ -75,7 +75,7 @@ class population():
                     Newborn.house = woman.house
                     woman.house.inhabitants.add(Newborn)
     
-    def getPopulationStatistics(self, StatsAgeRange = 17, DyingAge = 80):
+    def getStatistics(self, StatsAgeRange = 17, DyingAge = 80):
         ageList = [ citizen.age for citizen in self.citizens ]
         stats = {'citizens' : len(self.citizens) }
         if stats['citizens'] > 0:
@@ -105,6 +105,23 @@ class home():
 class village():
     def __init__(self, InitialHouses = 4):
         self.houses = { home() for n in range(InitialHouses) }
+    
+    def build(self, HousesPerYear = 1, MaxHouses = 50):
+        if len(self.houses) < MaxHouses:
+            self.houses.update( { home() for n in range(HousesPerYear) } )
+    
+    def getStatistics(self, HouseCapacity = 5):
+        if len(self.houses) > 0:
+            stats = {'inhabitants groups' : [] }
+            for inhabitants in range( HouseCapacity + 1 ):
+                stats['inhabitants groups'].append( len( { house for house in self.houses
+                      if  len(house.inhabitants) >= inhabitants
+                      and len(house.inhabitants) <  inhabitants + 1 } ) )
+            stats['average inhabitants'] = round( sum([ len(house.inhabitants) for house in self.houses ]) / len(self.houses) , 1)
+        else:
+            stats['inhabitants groups']  = [0 for inhabitants in range(0, HouseCapacity) ]
+            stats['average inhabitants'] = 0
+        return stats
 
 #------------------------------------------------------------------------------
 # functions
@@ -140,20 +157,6 @@ def fillingHouses(houses, population):
                 newhouse.inhabitants.add(citizen)               # moving in
                 citizen.house = newhouse
 
-
-def getHouseStatistics(houses):
-    if len(houses) > 0:
-        stats = {'inhabitants groups' : [] }
-        for inhabitants in range( parameters['HouseCapacity']+1 ):
-            stats['inhabitants groups'].append( len( { house for house in houses
-                  if  len(house.inhabitants) >= inhabitants
-                  and len(house.inhabitants) <  inhabitants + 1 } ) )
-        stats['average inhabitants'] = round( sum([ len(house.inhabitants) for house in houses ]) / len(houses) , 1)
-    else:
-        stats['inhabitants groups']  = [0 for inhabitants in range(0, parameters['HouseCapacity']) ]
-        stats['average inhabitants'] = 0
-    return stats
-
 #------------------------------------------------------------------------------
 # initialisation
 
@@ -169,8 +172,7 @@ statsHouses     = []
 
 for year in range(1, parameters['Years'] + 1):
 
-    if len(village.houses) < parameters['MaxHouses']:
-        village.houses.update( { home() for n in range(parameters['HousesPerYear']) } )
+    village.build(parameters['HousesPerYear'], parameters['MaxHouses'])
 
     population.aging(parameters['DyingAge'], parameters['AgingPerYear'])
 
@@ -178,8 +180,8 @@ for year in range(1, parameters['Years'] + 1):
 
     population.offspring(parameters['MarryingAge'], parameters['MaxParentAge'], parameters['HouseCapacity'], parameters['Random'])
     
-    statsPopulation.append( population.getPopulationStatistics(parameters['StatsAgeRange'],parameters['DyingAge']) )
-    statsHouses.append( getHouseStatistics(village.houses) )
+    statsPopulation.append( population.getStatistics(parameters['StatsAgeRange'],parameters['DyingAge']) )
+    statsHouses.append( village.getStatistics(parameters['HouseCapacity']) )
 
 #------------------------------------------------------------------------------
 #%% results
