@@ -25,6 +25,7 @@ parameters = dict(
     HouseCapacity = 5  ,
     AgingPerYear  = 4  ,
     StatsAgeRange = 17 ,    # size of age groups in years for statistics
+    Random        = False   # randomness for sex and start age
     )
 
 #------------------------------------------------------------------------------
@@ -34,7 +35,7 @@ class human():
     def __init__(self, age = 0, female = None ):
         self.age    = age
         if female == None:
-            female = bool(random.randint(0,1))  # random default does not work
+            female = bool(random.randint(0,1))  # random default initiated only once
         self.female = female
         self.house  = None
         self.spouse = None
@@ -103,8 +104,11 @@ def offspring(population):
             and min(woman.age, woman.spouse.age) >= parameters['MarryingAge']
             and max(woman.age, woman.spouse.age) <= parameters['MaxParentAge']
             and len(woman.house.inhabitants)     <  parameters['HouseCapacity']):
-                Newborn = human(female = femaleSwitch)
-                femaleSwitch = not femaleSwitch     # sex alternating
+                if parameters['Random']:
+                    Newborn = human()   # sex random
+                else:
+                    Newborn = human(female = femaleSwitch)
+                    femaleSwitch = not femaleSwitch     # sex alternating
                 population.add(Newborn)
                 Newborn.house = woman.house
                 woman.house.inhabitants.add(Newborn)
@@ -146,8 +150,10 @@ def getStatistics(population, houses):
 
 houses     = { home() for n in range(parameters['InitialHouses']) }
 
-population = { human(age = parameters['InitialAge'], female = bool(n % 2)) for n in range(parameters['InitialAdults']) }
-# population = { human(age = parameters['InitialAge'] + random.randint(0,10), female = bool(n % 2)) for n in range(parameters['InitialAdults']) }
+if parameters['Random']:
+    population = { human( age = parameters['InitialAge'] + random.randint(0,10) ) for n in range(parameters['InitialAdults']) }
+else:
+    population = { human( age = parameters['InitialAge'], female = bool(n % 2) )  for n in range(parameters['InitialAdults']) }
 
 #------------------------------------------------------------------------------
 # simulation
@@ -179,7 +185,9 @@ plt.style.use('dark_background')
 
 fig, (ax1, ax3) = plt.subplots(2, 1, sharex=True)
 
-years = range(1,len(stats)+1)
+years = range(1, len(stats)+1)
+
+
 
 
 Demographics = np.zeros([len(stats[-1]['citizens age groups']), len(stats)])
@@ -233,5 +241,5 @@ ax4.tick_params(axis='y', colors='gold')
 
 
 
-# plt.show()
-plt.savefig('result_deterministic.png', transparent=False)
+plt.show()
+# plt.savefig('result_deterministic.png', transparent=False)
