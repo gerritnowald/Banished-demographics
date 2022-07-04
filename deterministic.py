@@ -114,9 +114,9 @@ def offspring(population):
                 woman.house.inhabitants.add(Newborn)
 
 
-def getStatistics(population, houses):
+def getPopulationStatistics(population):
     ageList = [ citizen.age for citizen in population ]
-    stats   = dict( citizens = len(population) )
+    stats = {'citizens' : len(population) }
     if stats['citizens'] > 0:
         stats['citizens age groups'] = []
         for age in range(0, parameters['DyingAge']+1, parameters['StatsAgeRange'] ):
@@ -133,8 +133,12 @@ def getStatistics(population, houses):
         stats['median age']       = 0
         stats['ratio females']    = 0
         stats['ratio singles']    = 0
+    return stats
+
+
+def getHouseStatistics(houses):
     if len(houses) > 0:
-        stats['inhabitants groups'] = []
+        stats = {'inhabitants groups' : [] }
         for inhabitants in range( parameters['HouseCapacity']+1 ):
             stats['inhabitants groups'].append( len( { house for house in houses
                   if  len(house.inhabitants) >= inhabitants
@@ -158,7 +162,8 @@ else:
 #------------------------------------------------------------------------------
 # simulation
 
-stats = []
+statsPopulation = []
+statsHouses     = []
 
 for year in range(1, parameters['Years'] + 1):
 
@@ -171,12 +176,14 @@ for year in range(1, parameters['Years'] + 1):
 
     offspring(population)
 
-    stats.append( getStatistics(population, houses) )
+    statsPopulation.append( getPopulationStatistics(population) )
+    statsHouses.append( getHouseStatistics(houses) )
 
 #------------------------------------------------------------------------------
 #%% results
 
-print(stats[-1])
+print(statsPopulation[-1])
+print(statsHouses[-1])
 
 
 plt.close('all')
@@ -185,18 +192,18 @@ plt.style.use('dark_background')
 
 fig, (ax1, ax3) = plt.subplots(2, 1, sharex=True)
 
-years = range(1, len(stats)+1)
+years = range(1, len(statsPopulation)+1)
 
 
 
 
-Demographics = np.zeros([len(stats[-1]['citizens age groups']), len(stats)])
-for n in range(len(stats[-1]['citizens age groups'])):
-    Demographics[n,:] = [stat['citizens age groups'][n] for stat in stats]
+Demographics = np.zeros([len(statsPopulation[-1]['citizens age groups']), len(statsPopulation)])
+for n in range(len(statsPopulation[-1]['citizens age groups'])):
+    Demographics[n,:] = [stat['citizens age groups'][n] for stat in statsPopulation]
 
 ax1.bar(years, Demographics[0,:], width = 1,
         label = 'aged 0-' + str(parameters['StatsAgeRange'] - 1) )
-for n in range(1, len(stats[-1]['citizens age groups'])):
+for n in range(1, len(statsPopulation[-1]['citizens age groups'])):
     ax1.bar(years, Demographics[n,:], width = 1,
             bottom = sum(Demographics[:n,:]),
             label = 'aged ' + str(parameters['StatsAgeRange']*n) + '-' + str(parameters['StatsAgeRange']*(n+1)-1) )
@@ -207,7 +214,7 @@ ax1.set_ylabel('citizens')
 
 ax2 = ax1.twinx()
 
-ax2.step(years, [stat['median age'] for stat in stats], where='mid', color='gold')
+ax2.step(years, [stat['median age'] for stat in statsPopulation], where='mid', color='gold')
 
 ax2.set_ylabel('median age', color='gold')
 ax2.tick_params(axis='y', colors='gold')
@@ -215,12 +222,12 @@ ax2.tick_params(axis='y', colors='gold')
 
 
 
-Inhabitants = np.zeros([len(stats[-1]['inhabitants groups']), len(stats)])
-for n in range(len(stats[-1]['inhabitants groups'])):
-    Inhabitants[n,:] = [stat['inhabitants groups'][n] for stat in stats]
+Inhabitants = np.zeros([len(statsHouses[-1]['inhabitants groups']), len(statsHouses)])
+for n in range(len(statsHouses[-1]['inhabitants groups'])):
+    Inhabitants[n,:] = [stat['inhabitants groups'][n] for stat in statsHouses]
 
 ax3.bar(years, Inhabitants[0,:], width = 1, label = 'empty' )
-for n in range(1, len(stats[-1]['inhabitants groups'])-1 ):
+for n in range(1, len(statsHouses[-1]['inhabitants groups'])-1 ):
     ax3.bar(years, Inhabitants[n,:], width = 1,
             bottom = sum(Inhabitants[:n,:]), label = str(n) + ' inhabitants' )
 ax3.bar(years, Inhabitants[-1,:], width = 1,
@@ -233,7 +240,7 @@ ax3.set_ylabel('houses')
 
 ax4 = ax3.twinx()
 
-ax4.step(years, [stat['ratio singles'] for stat in stats], where='mid', color='gold')
+ax4.step(years, [stat['ratio singles'] for stat in statsPopulation], where='mid', color='gold')
 
 ax4.set_ylabel('ratio singles', color='gold')
 ax4.tick_params(axis='y', colors='gold')
