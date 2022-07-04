@@ -30,9 +30,9 @@ parameters = dict(
 #------------------------------------------------------------------------------
 # initialisation
 
-population = classes.population(parameters['InitialAdults'], parameters['InitialAge'], parameters['Random'])
+population = classes.population(parameters)
 
-village    = classes.village(parameters['InitialHouses'])
+village    = classes.village(parameters)
 
 #------------------------------------------------------------------------------
 # simulation
@@ -42,22 +42,22 @@ statsHouses     = []
 
 for year in range(1, parameters['Years'] + 1):
 
-    village.build(parameters['HousesPerYear'], parameters['MaxHouses'])
+    village.build()
 
-    population.aging(parameters['DyingAge'], parameters['AgingPerYear'])
+    population.aging()
 
-    classes.fillingHouses(village, population, parameters['MarryingAge'], parameters['MaxParentAge'])
+    village.fillingHouses(population)
 
-    population.offspring(parameters['MarryingAge'], parameters['MaxParentAge'], parameters['HouseCapacity'], parameters['Random'])
-    
-    statsPopulation.append( population.getStatistics(parameters['StatsAgeRange'], parameters['MarryingAge'], parameters['MaxParentAge'], parameters['DyingAge']) )
-    statsHouses.append( village.getStatistics(parameters['HouseCapacity']) )
+    population.offspring()
+
+    statsPopulation.append( population.getStatistics() )
+    statsHouses.append(        village.getStatistics() )
 
 #------------------------------------------------------------------------------
 #%% results
 
-print(statsPopulation[-1])
-print(statsHouses[-1])
+print( statsPopulation[-1] )
+print( statsHouses[-1] )
 
 
 plt.close('all')
