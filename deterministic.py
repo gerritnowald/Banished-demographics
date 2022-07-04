@@ -40,6 +40,15 @@ class human():
         self.house  = None
         self.spouse = None
 
+
+class population():
+    def __init__(self, InitialAdults, InitialAge, Random = False):
+        if Random:
+            self.citizens = { human( age = InitialAge + random.randint(0,10) ) for n in range(InitialAdults) }
+        else:
+            self.citizens = { human( age = InitialAge, female = bool(n % 2) )  for n in range(InitialAdults) }
+
+
 class home():
     def __init__(self):
         self.inhabitants = set()
@@ -152,12 +161,9 @@ def getHouseStatistics(houses):
 #------------------------------------------------------------------------------
 # initialisation
 
-houses     = { home() for n in range(parameters['InitialHouses']) }
+population = population(parameters['InitialAdults'], parameters['InitialAge'], parameters['Random'])
 
-if parameters['Random']:
-    population = { human( age = parameters['InitialAge'] + random.randint(0,10) ) for n in range(parameters['InitialAdults']) }
-else:
-    population = { human( age = parameters['InitialAge'], female = bool(n % 2) )  for n in range(parameters['InitialAdults']) }
+houses     = { home() for n in range(parameters['InitialHouses']) }
 
 #------------------------------------------------------------------------------
 # simulation
@@ -170,13 +176,13 @@ for year in range(1, parameters['Years'] + 1):
     if len(houses) < parameters['MaxHouses']:
         houses.update( { home() for n in range(parameters['HousesPerYear']) } )
 
-    aging(population)
+    aging(population.citizens)
 
-    fillingHouses(houses, population)
+    fillingHouses(houses, population.citizens)
 
-    offspring(population)
+    offspring(population.citizens)
 
-    statsPopulation.append( getPopulationStatistics(population) )
+    statsPopulation.append( getPopulationStatistics(population.citizens) )
     statsHouses.append( getHouseStatistics(houses) )
 
 #------------------------------------------------------------------------------
