@@ -1,11 +1,15 @@
+# -*- coding: utf-8 -*-
 """
 Simulation of demographic development in Banished
 
 author: Gerrit Nowald
 """
 
+# import classes
+
 import statistics
 import random
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -75,7 +79,14 @@ class population():
                     Newborn.house = woman.house
                     woman.house.inhabitants.add(Newborn)
     
-    def getStatistics(self, StatsAgeRange = 17, DyingAge = 80):
+    def findSingles(self, MarryingAge, MaxParentAge, group = None):
+        if group == None:
+            group = self.citizens
+        return { citizen for citizen in group if citizen.spouse == None
+                and citizen.age >= MarryingAge
+                and citizen.age <  MaxParentAge }
+    
+    def getStatistics(self, StatsAgeRange = 17, MarryingAge = 16, MaxParentAge = 40, DyingAge = 80):
         ageList = [ citizen.age for citizen in self.citizens ]
         stats = {'citizens' : len(self.citizens) }
         if stats['citizens'] > 0:
@@ -87,7 +98,7 @@ class population():
             stats['average age']   = round( sum(ageList) / stats['citizens'] )
             stats['median age']    = round( statistics.median(ageList) )
             stats['ratio females'] = round( len( { citizen for citizen in self.citizens if citizen.female } ) / stats['citizens'] , 2)
-            stats['ratio singles'] = round( len( findSingles(self.citizens) ) / stats['citizens'], 2)
+            stats['ratio singles'] = round( len( self.findSingles(MarryingAge, MaxParentAge) ) / stats['citizens'], 2)
         else:
             stats['citizens age groups'] = [0 for age in range(0, DyingAge+1, StatsAgeRange) ]
             stats['average age']   = 0
@@ -126,17 +137,11 @@ class village():
 #------------------------------------------------------------------------------
 # functions
 
-def findSingles(group):
-    return { citizen for citizen in group if citizen.spouse == None
-            and citizen.age >= parameters['MarryingAge']
-            and citizen.age <  parameters['MaxParentAge'] }
-
-
-def fillingHouses(houses, population):
-    emptyHouses = { house for house in houses if len(house.inhabitants) == 0 }
+def fillingHouses(village, population, MarryingAge, MaxParentAge):
+    emptyHouses = { house for house in village.houses if len(house.inhabitants) == 0 }
 
     # marry (if empty house is available)
-    singles     = findSingles(population)
+    singles     = population.findSingles(MarryingAge, MaxParentAge)
     singlewomen = { citizen for citizen in singles if citizen.female }
     for n in range(len(singlewomen)-len(emptyHouses)):
         singlewomen.pop()   # only as much marriages as empty houses
@@ -147,7 +152,7 @@ def fillingHouses(houses, population):
             woman.spouse.spouse = woman     # update husband's spouse
 
     # couples move into empty houses
-    marriedMovingWomen = singlewomen - findSingles(singlewomen)
+    marriedMovingWomen = singlewomen - population.findSingles(MarryingAge, MaxParentAge, group = singlewomen)
     for woman in marriedMovingWomen:
         if len(emptyHouses) > 0:
             newhouse = emptyHouses.pop()    # 1 house for several citizen
@@ -176,11 +181,11 @@ for year in range(1, parameters['Years'] + 1):
 
     population.aging(parameters['DyingAge'], parameters['AgingPerYear'])
 
-    fillingHouses(village.houses, population.citizens)
+    fillingHouses(village, population, parameters['MarryingAge'], parameters['MaxParentAge'])
 
     population.offspring(parameters['MarryingAge'], parameters['MaxParentAge'], parameters['HouseCapacity'], parameters['Random'])
     
-    statsPopulation.append( population.getStatistics(parameters['StatsAgeRange'],parameters['DyingAge']) )
+    statsPopulation.append( population.getStatistics(parameters['StatsAgeRange'], parameters['MarryingAge'], parameters['MaxParentAge'], parameters['DyingAge']) )
     statsHouses.append( village.getStatistics(parameters['HouseCapacity']) )
 
 #------------------------------------------------------------------------------
