@@ -101,6 +101,11 @@ class home():
     def __init__(self):
         self.inhabitants = set()
 
+
+class village():
+    def __init__(self, InitialHouses = 4):
+        self.houses = { home() for n in range(InitialHouses) }
+
 #------------------------------------------------------------------------------
 # functions
 
@@ -154,7 +159,7 @@ def getHouseStatistics(houses):
 
 population = population(parameters['InitialAdults'], parameters['InitialAge'], parameters['Random'])
 
-houses     = { home() for n in range(parameters['InitialHouses']) }
+village    = village(parameters['InitialHouses'])
 
 #------------------------------------------------------------------------------
 # simulation
@@ -164,17 +169,17 @@ statsHouses     = []
 
 for year in range(1, parameters['Years'] + 1):
 
-    if len(houses) < parameters['MaxHouses']:
-        houses.update( { home() for n in range(parameters['HousesPerYear']) } )
+    if len(village.houses) < parameters['MaxHouses']:
+        village.houses.update( { home() for n in range(parameters['HousesPerYear']) } )
 
     population.aging(parameters['DyingAge'], parameters['AgingPerYear'])
 
-    fillingHouses(houses, population.citizens)
+    fillingHouses(village.houses, population.citizens)
 
     population.offspring(parameters['MarryingAge'], parameters['MaxParentAge'], parameters['HouseCapacity'], parameters['Random'])
     
     statsPopulation.append( population.getPopulationStatistics(parameters['StatsAgeRange'],parameters['DyingAge']) )
-    statsHouses.append( getHouseStatistics(houses) )
+    statsHouses.append( getHouseStatistics(village.houses) )
 
 #------------------------------------------------------------------------------
 #%% results
