@@ -18,13 +18,13 @@ parameters = dict(
     InitialAge    = 20 ,
     MarryingAge   = 16 ,
     MaxParentAge  = 40 ,
-    DyingAge      = 50 ,
+    DyingAge      = 80 ,
     InitialHouses = 4  ,
     HousesPerYear = 1  ,
     MaxHouses     = 50 ,
     HouseCapacity = 5  ,
     AgingPerYear  = 4  ,
-    StatsAgeRange = 9 ,    # size of age groups in years for statistics
+    StatsAgeRange = 17 ,    # size of age groups in years for statistics
     )
 
 #------------------------------------------------------------------------------
@@ -48,7 +48,8 @@ class home():
 
 def findSingles(group):
     return { citizen for citizen in group if citizen.spouse == None
-            and citizen.age >= parameters['MarryingAge'] }
+            and citizen.age >= parameters['MarryingAge']
+            and citizen.age <  parameters['MaxParentAge'] }
 
 
 def fillingHouses(houses, population):
@@ -130,81 +131,28 @@ def getStatistics(population, houses):
         stats['ratio singles']    = 0
     if len(houses) > 0:
         stats['inhabitants groups'] = []
-        for inhabitants in range(0, parameters['HouseCapacity']+1 ):
+        for inhabitants in range( parameters['HouseCapacity']+1 ):
             stats['inhabitants groups'].append( len( { house for house in houses
                   if  len(house.inhabitants) >= inhabitants
                   and len(house.inhabitants) <  inhabitants + 1 } ) )
-        stats['mean inhabitants'] = round( sum([ len(house.inhabitants) for house in houses ]) / len(houses) , 1)
+        stats['average inhabitants'] = round( sum([ len(house.inhabitants) for house in houses ]) / len(houses) , 1)
     else:
-        stats['inhabitants groups'] = [0 for inhabitants in range(0, parameters['HouseCapacity']) ]
-        stats['mean inhabitants'] = 0
+        stats['inhabitants groups']  = [0 for inhabitants in range(0, parameters['HouseCapacity']) ]
+        stats['average inhabitants'] = 0
     return stats
-
-
-def plot(value, steps = False, grid = False):
-    if steps:
-        plt.step(range(len(stats)), [stat[value] for stat in stats], where='post', color='gold')
-    else:
-        plt.plot(range(len(stats)), [stat[value] for stat in stats], color='gold')
-    plt.xlabel('years')
-    plt.ylabel(value)
-    if grid:
-        plt.grid()
-    plt.tight_layout()
-
-
-def plotDemographics(legend = True, grid = False):
-    Demographics = np.zeros([len(stats[-1]['citizens age groups']), len(stats)])
-    for n in range(len(stats[-1]['citizens age groups'])):
-        Demographics[n,:] = [stat['citizens age groups'][n] for stat in stats]
-
-    plt.bar(range(len(stats)), Demographics[0,:], width = 1,
-            label = '0-' + str(parameters['StatsAgeRange'] - 1) )
-    for n in range(1, len(stats[-1]['citizens age groups'])):
-        plt.bar(range(len(stats)), Demographics[n,:], width = 1,
-                bottom = sum(Demographics[:n,:]),
-                label = str(parameters['StatsAgeRange']*n) + '-' + str(parameters['StatsAgeRange']*(n+1)-1) )
-    if legend:
-        plt.legend()
-    plt.xlabel('years')
-    plt.ylabel('citizens')
-    if grid:
-        plt.grid()
-    plt.tight_layout()
-
-
-def plotInhabitants(legend = True, grid = False):
-    Inhabitants = np.zeros([len(stats[-1]['inhabitants groups']), len(stats)])
-    for n in range(len(stats[-1]['inhabitants groups'])):
-        Inhabitants[n,:] = [stat['inhabitants groups'][n] for stat in stats]
-
-    plt.bar(range(len(stats)), Inhabitants[0,:], width = 1, label = 'empty' )
-    for n in range(1, len(stats[-1]['inhabitants groups'])-1 ):
-        plt.bar(range(len(stats)), Inhabitants[n,:], width = 1,
-                bottom = sum(Inhabitants[:n,:]), label = str(n) + ' inhabitants' )
-    plt.bar(range(len(stats)), Inhabitants[-1,:], width = 1,
-            bottom = sum(Inhabitants[:-1,:]), label = 'full' )
-    if legend:
-        plt.legend()
-    plt.xlabel('years')
-    plt.ylabel('houses')
-    if grid:
-        plt.grid()
-    plt.tight_layout()
 
 #------------------------------------------------------------------------------
 # initialisation
 
 houses     = { home() for n in range(parameters['InitialHouses']) }
 
-# population = { human(age = parameters['InitialAge']) for n in range(parameters['InitialAdults']) }
 population = { human(age = parameters['InitialAge'], female = bool(n % 2)) for n in range(parameters['InitialAdults']) }
 # population = { human(age = parameters['InitialAge'] + random.randint(0,10), female = bool(n % 2)) for n in range(parameters['InitialAdults']) }
 
 #------------------------------------------------------------------------------
 # simulation
 
-stats = [ getStatistics(population, houses) ]
+stats = []
 
 for year in range(1, parameters['Years'] + 1):
 
@@ -228,22 +176,62 @@ print(stats[-1])
 plt.close('all')
 plt.style.use('dark_background')
 
-plt.figure()
 
-plt.subplot(211)
-# plot('citizens')
-plotDemographics(legend = True)
+fig, (ax1, ax3) = plt.subplots(2, 1, sharex=True)
 
-# plt.subplot(224)
-# plot('average age')
-# plot('median age')
-#
-# plt.subplot(222)
-# plot('ratio singles')
-#
-plt.subplot(212)
-# plot('mean inhabitants')
-plotInhabitants(legend = True)
+years = range(1,len(stats)+1)
 
-plt.show()
-# plt.savefig('population.png', transparent=False)
+
+Demographics = np.zeros([len(stats[-1]['citizens age groups']), len(stats)])
+for n in range(len(stats[-1]['citizens age groups'])):
+    Demographics[n,:] = [stat['citizens age groups'][n] for stat in stats]
+
+ax1.bar(years, Demographics[0,:], width = 1,
+        label = 'aged 0-' + str(parameters['StatsAgeRange'] - 1) )
+for n in range(1, len(stats[-1]['citizens age groups'])):
+    ax1.bar(years, Demographics[n,:], width = 1,
+            bottom = sum(Demographics[:n,:]),
+            label = 'aged ' + str(parameters['StatsAgeRange']*n) + '-' + str(parameters['StatsAgeRange']*(n+1)-1) )
+
+ax1.legend(loc='upper left', prop={'size': 6})
+ax1.set_ylabel('citizens')
+
+
+ax2 = ax1.twinx()
+
+ax2.step(years, [stat['median age'] for stat in stats], where='mid', color='gold')
+
+ax2.set_ylabel('median age', color='gold')
+ax2.tick_params(axis='y', colors='gold')
+
+
+
+
+Inhabitants = np.zeros([len(stats[-1]['inhabitants groups']), len(stats)])
+for n in range(len(stats[-1]['inhabitants groups'])):
+    Inhabitants[n,:] = [stat['inhabitants groups'][n] for stat in stats]
+
+ax3.bar(years, Inhabitants[0,:], width = 1, label = 'empty' )
+for n in range(1, len(stats[-1]['inhabitants groups'])-1 ):
+    ax3.bar(years, Inhabitants[n,:], width = 1,
+            bottom = sum(Inhabitants[:n,:]), label = str(n) + ' inhabitants' )
+ax3.bar(years, Inhabitants[-1,:], width = 1,
+        bottom = sum(Inhabitants[:-1,:]), label = 'full' )
+
+ax3.legend(loc='upper left', prop={'size': 6})
+ax3.set_xlabel('years')
+ax3.set_ylabel('houses')
+
+
+ax4 = ax3.twinx()
+
+ax4.step(years, [stat['ratio singles'] for stat in stats], where='mid', color='gold')
+
+ax4.set_ylabel('ratio singles', color='gold')
+ax4.tick_params(axis='y', colors='gold')
+
+
+
+
+# plt.show()
+plt.savefig('result_deterministic.png', transparent=False)
