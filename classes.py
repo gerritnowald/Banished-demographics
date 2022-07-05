@@ -13,24 +13,23 @@ import numpy as np
 #------------------------------------------------------------------------------
 # classes
 
-class human():
-    def __init__(self, age = 0, female = None ):
-        self.age    = age
-        if female == None:
-            female = bool(random.randint(0,1))  # random default initiated only once
-        self.female = female
-        self.house  = None
-        self.spouse = None
-
-
 class population():
     def __init__(self, parameters):
         self.parameters = parameters
         if self.parameters['Random']:
-            self.citizens = { human( age = self.parameters['InitialAge'] + random.randint(0,10) ) for n in range(self.parameters['InitialAdults']) }
+            self.citizens = { self.citizen( age = self.parameters['InitialAge'] + random.randint(0,10) ) for n in range(self.parameters['InitialAdults']) }
         else:
-            self.citizens = { human( age = self.parameters['InitialAge'], female = bool(n % 2) )  for n in range(self.parameters['InitialAdults']) }
+            self.citizens = { self.citizen( age = self.parameters['InitialAge'], female = bool(n % 2) )  for n in range(self.parameters['InitialAdults']) }
             self.femaleSwitch = True
+            
+    class citizen():
+        def __init__(self, age = 0, female = None ):
+            self.age    = age
+            if female == None:
+                female = bool(random.randint(0,1))  # random default initiated only once
+            self.female = female
+            self.house  = None
+            self.spouse = None
 
     def aging(self):
         for citizen in self.citizens:
@@ -50,9 +49,9 @@ class population():
                 and max(woman.age, woman.spouse.age) <= self.parameters['MaxParentAge']
                 and len(woman.house.inhabitants)     <  self.parameters['HouseCapacity'] ):
                     if self.parameters['Random']:
-                        Newborn = human()   # sex random
+                        Newborn = self.citizen()   # sex random
                     else:
-                        Newborn = human(female = self.femaleSwitch)
+                        Newborn = self.citizen(female = self.femaleSwitch)
                         self.femaleSwitch = not self.femaleSwitch     # sex alternating
                     self.citizens.add(Newborn)
                     Newborn.house = woman.house
@@ -60,7 +59,7 @@ class population():
 
     def findSingles(self, group = None):
         if group == None:
-            group = self.citizens
+            group = self.citizens   # self not defined in function call
         return { citizen for citizen in group if citizen.spouse == None
                 and citizen.age >= self.parameters['MarryingAge']
                 and citizen.age <  self.parameters['MaxParentAge'] }
@@ -87,19 +86,18 @@ class population():
         return stats
 
 
-class home():
-    def __init__(self):
-        self.inhabitants = set()
-
-
 class village():
     def __init__(self, parameters):
         self.parameters = parameters
-        self.houses = { home() for n in range(self.parameters['InitialHouses']) }
+        self.houses = { self.house() for n in range(self.parameters['InitialHouses']) }
+    
+    class house():
+        def __init__(self):
+            self.inhabitants = set()
 
     def build(self):
         if len(self.houses) < self.parameters['MaxHouses']:
-            self.houses.update( { home() for n in range(self.parameters['HousesPerYear']) } )
+            self.houses.update( { self.house() for n in range(self.parameters['HousesPerYear']) } )
 
     def fillingHouses(self, population):
         emptyHouses = { house for house in self.houses if len(house.inhabitants) == 0 }

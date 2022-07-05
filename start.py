@@ -41,15 +41,15 @@ statsPopulation = []
 statsHouses     = []
 
 for year in range(1, parameters['Years'] + 1):
-
-    village.build()
-
+    
     population.aging()
-
+    
+    village.build()
+    
     village.fillingHouses(population)
-
+    
     population.offspring()
-
+    
     statsPopulation.append( population.getStatistics() )
     statsHouses.append(        village.getStatistics() )
 
