@@ -66,4 +66,4 @@ plt.style.use('dark_background')
 classes.plotResult(parameters, statsPopulation, statsHouses)
 
 plt.show()
-# plt.savefig('result_deterministic.png', transparent=False)
+# plt.savefig('res_50h_100y.png', transparent=False)

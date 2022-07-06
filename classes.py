@@ -34,15 +34,14 @@ class population():
     def aging(self):
         for citizen in self.citizens:
             citizen.age += self.parameters['AgingPerYear']
-        dying = { citizen for citizen in self.citizens if citizen.age >= self.parameters['DyingAge'] }
+        dying = { citizen for citizen in self.citizens if citizen.age > self.parameters['DyingAge'] }
         self.citizens -= dying
         for citizen in dying:
             if citizen.house != None:
                 citizen.house.inhabitants.remove(citizen)
 
     def offspring(self):
-        marriedwomen = { citizen for citizen in self.citizens if citizen.female
-                        and citizen.spouse != None }
+        marriedwomen = { citizen for citizen in self.citizens if citizen.female and citizen.spouse != None }
         for woman in marriedwomen:
             if ( woman.house == woman.spouse.house
                 and min(woman.age, woman.spouse.age) >= self.parameters['MarryingAge']
@@ -62,7 +61,7 @@ class population():
             group = self.citizens   # self not defined in function call
         return { citizen for citizen in group if citizen.spouse == None
                 and citizen.age >= self.parameters['MarryingAge']
-                and citizen.age <  self.parameters['MaxParentAge'] }
+                and citizen.age <= self.parameters['MaxParentAge'] }
 
     def getStatistics(self):
         ageList = [ citizen.age for citizen in self.citizens ]
@@ -150,11 +149,9 @@ def plotResult(parameters, statsPopulation, statsHouses):
     for n in range(len(statsPopulation[-1]['citizens age groups'])):
         Demographics[n,:] = [stat['citizens age groups'][n] for stat in statsPopulation]
 
-    ax1.bar(years, Demographics[0,:], width = 1,
-            label = 'aged 0-' + str(parameters['StatsAgeRange'] - 1) )
+    ax1.bar(years, Demographics[0,:], width = 1, label = 'aged 0-' + str(parameters['StatsAgeRange'] - 1) )
     for n in range(1, len(statsPopulation[-1]['citizens age groups'])):
-        ax1.bar(years, Demographics[n,:], width = 1,
-                bottom = sum(Demographics[:n,:]),
+        ax1.bar(years, Demographics[n,:], width = 1, bottom = sum(Demographics[:n,:]),
                 label = 'aged ' + str(parameters['StatsAgeRange']*n) + '-' + str(parameters['StatsAgeRange']*(n+1)-1) )
 
     ax1.legend(loc='upper left', prop={'size': 6})
@@ -162,12 +159,10 @@ def plotResult(parameters, statsPopulation, statsHouses):
 
 
     ax2 = ax1.twinx()
-
     ax2.step(years, [stat['median age'] for stat in statsPopulation], where='mid', color='gold')
-
     ax2.set_ylabel('median age', color='gold')
     ax2.tick_params(axis='y', colors='gold')
-
+    
 
     Inhabitants = np.zeros([len(statsHouses[-1]['inhabitants groups']), len(statsHouses)])
     for n in range(len(statsHouses[-1]['inhabitants groups'])):
@@ -175,10 +170,8 @@ def plotResult(parameters, statsPopulation, statsHouses):
 
     ax3.bar(years, Inhabitants[0,:], width = 1, label = 'empty' )
     for n in range(1, len(statsHouses[-1]['inhabitants groups'])-1 ):
-        ax3.bar(years, Inhabitants[n,:], width = 1,
-                bottom = sum(Inhabitants[:n,:]), label = str(n) + ' inhabitants' )
-    ax3.bar(years, Inhabitants[-1,:], width = 1,
-            bottom = sum(Inhabitants[:-1,:]), label = 'full' )
+        ax3.bar(years, Inhabitants[n,:], width = 1, bottom = sum(Inhabitants[:n,:]), label = str(n) + ' inhabitants' )
+    ax3.bar(years, Inhabitants[-1,:], width = 1, bottom = sum(Inhabitants[:-1,:]), label = 'full' )
 
     ax3.legend(loc='upper left', prop={'size': 6})
     ax3.set_xlabel('years')
@@ -186,8 +179,6 @@ def plotResult(parameters, statsPopulation, statsHouses):
 
 
     ax4 = ax3.twinx()
-
     ax4.step(years, [stat['ratio singles'] for stat in statsPopulation], where='mid', color='gold')
-
     ax4.set_ylabel('ratio singles', color='gold')
     ax4.tick_params(axis='y', colors='gold')
