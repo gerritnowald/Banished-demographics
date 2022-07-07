@@ -1,6 +1,6 @@
 # Banished demographics
 
-![](https://github.com/gerritnowald/Banished-demographics/blob/main/res_50h_100y.png)
+![](https://github.com/gerritnowald/Banished-demographics/blob/main/result.png)
 
 In the city builder game [Banished](https://www.gog.com/de/game/banished), the player manages a small medieval village. While the beginning of the game heavily focuses on survival elements like gathering food and firewood supply, another threat arises once the basic needs have been met: demographic change. The population ages and the village may die out, if the younger generation does not replace the old quickly enough. But growing too fast might deplete the resources, which also leads to the downfall of the village.
 

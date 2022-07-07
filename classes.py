@@ -17,7 +17,7 @@ class population():
     def __init__(self, parameters):
         self.parameters = parameters
         if self.parameters['Random']:
-            self.citizens = { self.citizen( age = self.parameters['InitialAge'] + random.randint(0,10) ) for n in range(self.parameters['InitialAdults']) }
+            self.citizens = { self.citizen( age = self.parameters['InitialAge'] + random.randint(0,10) ) for _ in range(self.parameters['InitialAdults']) }
         else:
             self.citizens = { self.citizen( age = self.parameters['InitialAge'], female = bool(n % 2) )  for n in range(self.parameters['InitialAdults']) }
             self.femaleSwitch = True
@@ -77,7 +77,7 @@ class population():
             stats['ratio females'] = round( len( { citizen for citizen in self.citizens if citizen.female } ) / stats['citizens'] , 2)
             stats['ratio singles'] = round( len( self.findSingles() ) / stats['citizens'], 2)
         else:
-            stats['citizens age groups'] = [0 for age in range(0, self.parameters['DyingAge']+1, self.parameters['StatsAgeRange']) ]
+            stats['citizens age groups'] = [0 for _ in range(0, self.parameters['DyingAge']+1, self.parameters['StatsAgeRange']) ]
             stats['average age']   = 0
             stats['median age']    = 0
             stats['ratio females'] = 0
@@ -88,7 +88,7 @@ class population():
 class village():
     def __init__(self, parameters):
         self.parameters = parameters
-        self.houses = { self.house() for n in range(self.parameters['InitialHouses']) }
+        self.houses = { self.house() for _ in range(self.parameters['InitialHouses']) }
     
     class house():
         def __init__(self):
@@ -96,7 +96,7 @@ class village():
 
     def build(self):
         if len(self.houses) < self.parameters['MaxHouses']:
-            self.houses.update( { self.house() for n in range(self.parameters['HousesPerYear']) } )
+            self.houses.update( { self.house() for _ in range(self.parameters['HousesPerYear']) } )
 
     def fillingHouses(self, population):
         emptyHouses = { house for house in self.houses if len(house.inhabitants) == 0 }
@@ -104,7 +104,7 @@ class village():
         # marry (if empty house is available)
         singles     = population.findSingles()
         singlewomen = { citizen for citizen in singles if citizen.female }
-        for n in range(len(singlewomen)-len(emptyHouses)):
+        for _ in range(len(singlewomen)-len(emptyHouses)):
             singlewomen.pop()   # only as much marriages as empty houses
         singlemen = singles - singlewomen
         for woman in singlewomen:
@@ -132,7 +132,7 @@ class village():
                       and len(house.inhabitants) <  inhabitants + 1 } ) )
             stats['average inhabitants'] = round( sum([ len(house.inhabitants) for house in self.houses ]) / len(self.houses) , 1)
         else:
-            stats['inhabitants groups']  = [0 for inhabitants in range(0, self.parameters['HouseCapacity']) ]
+            stats['inhabitants groups']  = [0 for _ in range(0, self.parameters['HouseCapacity']) ]
             stats['average inhabitants'] = 0
         return stats
 
